@@ -14,24 +14,83 @@ import {
   Stack,
   Image,
   Box,
-  CloseButton
+  CloseButton,
+  useToast
 } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'; 
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 
 export default function RegisterScreen() {
   const navigate = useNavigate();
-  const handleRegister = (e) => {
-    e.preventDefault();
-    localStorage.setItem('token', 'seuTokenDeAutenticacao');
-    navigate('/Login');
-  };
+  const toast = useToast();
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
   const handlePasswordVisibility = () => setShowPassword(!showPassword);
   const handleRepeatPasswordVisibility = () => setShowRepeatPassword(!showRepeatPassword);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    // Verificar se as senhas correspondem
+    if (password !== repeatPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não correspondem.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      // Fazer a requisição ao backend para registrar o usuário
+      const response = await fetch('http://localhost:8000/usuarios/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          senha: password
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Sucesso',
+          description: 'Cadastro realizado com sucesso!',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        navigate('/Login');
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: 'Erro',
+          description: errorData.detail || 'Falha ao registrar',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Falha ao registrar. Tente novamente.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <Stack minH={'100vh'} direction={{ base: 'column', md: 'row' }}>
@@ -44,12 +103,12 @@ export default function RegisterScreen() {
           <Text fontSize="md" color="gray.600" mb={4}>É rápido e fácil.</Text>
           <FormControl id="email">
             <FormLabel>Email</FormLabel>
-            <Input type="email" />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </FormControl>
           <FormControl id="password">
             <FormLabel>Senha</FormLabel>
             <InputGroup>
-              <Input type={showPassword ? 'text' : 'password'} />
+              <Input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} />
               <InputRightElement h={'full'}>
                 <Button variant={'ghost'} onClick={handlePasswordVisibility}>
                   {showPassword ? <ViewOffIcon /> : <ViewIcon />}
@@ -60,7 +119,7 @@ export default function RegisterScreen() {
           <FormControl id="repeat-password">
             <FormLabel>Confirme a senha</FormLabel>
             <InputGroup>
-              <Input type={showRepeatPassword ? 'text' : 'password'} />
+              <Input type={showRepeatPassword ? 'text' : 'password'} value={repeatPassword} onChange={(e) => setRepeatPassword(e.target.value)} />
               <InputRightElement h={'full'}>
                 <Button variant={'ghost'} onClick={handleRepeatPasswordVisibility}>
                   {showRepeatPassword ? <ViewOffIcon /> : <ViewIcon />}
@@ -85,7 +144,7 @@ export default function RegisterScreen() {
         />
       </Flex>
     </Stack>
-  )
+  );
 }
 
 
