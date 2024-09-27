@@ -24,6 +24,7 @@ export default function RegisterScreen() {
   const navigate = useNavigate();
   const toast = useToast();
 
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
@@ -56,6 +57,7 @@ export default function RegisterScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          nome: nome,
           email: email,
           senha: password
         }),
@@ -101,6 +103,10 @@ export default function RegisterScreen() {
             <CloseButton />
           </Box>
           <Text fontSize="md" color="gray.600" mb={4}>É rápido e fácil.</Text>
+          <FormControl id="nome">
+            <FormLabel>Nome</FormLabel>
+            <Input type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </FormControl>
           <FormControl id="email">
             <FormLabel>Email</FormLabel>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -146,78 +152,3 @@ export default function RegisterScreen() {
     </Stack>
   );
 }
-
-
-
-
-
-
-
-// import { Link } from "react-router-dom";
-// import { useState } from "react";
-// import { LayoutComponents } from "../../components/LayoutComponents"
-// import React from 'react';
-// import cnmpIMG from '../../assets/cnmp.jpg'
-
-
-// export const Register = () => {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [name, setName] = useState("")
-
-//   return (
-//     <LayoutComponents >
-//       <form className="login-form">
-        
-//         <span className="login-form-title">
-//           <img src={cnmpIMG} alt="Usuário do CNMP" />
-//         </span>
-
-//         <span className="login-form-title"> Criar conta </span>
-
-//         <div className="wrap-input">
-//           <input
-//             className={name !== "" ? "has-val input" : "input"}
-//             type="email"
-//             value={name}
-//             onChange={(e) => setName(e.target.value)}
-//           />
-//           <span className="focus-input" data-placeholder="Nome"></span>
-//         </div>
-
-//         <div className="wrap-input">
-//           <input
-//             className={email !== "" ? "has-val input" : "input"}
-//             type="email"
-//             value={email}
-//             onChange={(e) => setEmail(e.target.value)}
-//           />
-//           <span className="focus-input" data-placeholder="Email"></span>
-//         </div>
-
-//         <div className="wrap-input">
-//           <input
-//             className={password !== "" ? "has-val input" : "input"}
-//             type="password"
-//             value={password}
-//             onChange={(e) => setPassword(e.target.value)}
-//           />
-//           <span className="focus-input" data-placeholder="Password"></span>
-        
-//         </div>
-//         <div className="container-login-form-btn">
-//           <button className="login-form-btn">Login</button>
-//         </div>
-
-//         <div className="text-center">
-//           <span className="txt1">Já possui conta? </span>
-//           <Link className="txt2" to="/login">
-//             Acessar com email e senha.
-//           </Link>
-//         </div>
-//       </form>
-//     </LayoutComponents>
-//   )
-// }
-
-// export default Register;

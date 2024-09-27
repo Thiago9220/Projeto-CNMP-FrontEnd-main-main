@@ -7,6 +7,8 @@ import PrivateRoute from './pages/PrivateRoute'
 import HomePageLogada from './pages/HomePageLogada';
 import Adminpage from './pages/AdminPage/index'
 import CadastramentoUsuarioPage from './pages/CadastramentoUsuarioPage';
+import EditarPerfil from './pages/Perfil';
+
 
 export const AppRouter = () => {
   return (
@@ -23,6 +25,7 @@ export const AppRouter = () => {
         <Route path="/HomePageLogada" element={<HomePageLogada />} />
         <Route path="/administracao" element={<Adminpage />} />
         <Route path="/cadastramentodeusuário" element={<CadastramentoUsuarioPage />} />
+        <Route path="/perfil" element={<EditarPerfil />} />
         <Route path="*" element={<h1>404 Not Found</h1>} /> 
       </Routes>
     </Router>

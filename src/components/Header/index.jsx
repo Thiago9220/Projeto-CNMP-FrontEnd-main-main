@@ -41,12 +41,12 @@ import {
   FiBell,
   FiChevronDown,
   FiLogOut,
-  FiUserPlus, 
+  FiUserPlus,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// Importing images
+// Importando imagens
 import cnmpffImage from "../../assets/cnmpff.png";
 import logoImage from "../../assets/logo.png";
 
@@ -55,12 +55,80 @@ const LinkItems = [
   { name: "Medições de indicador", icon: FiTrendingUp, route: "" },
   {
     name: "Cadastrar usuários",
-    icon: FiUserPlus, // Change the icon here
+    icon: FiUserPlus,
     route: "/Cadastramentodeusuário",
   },
   { name: "Incluir indicadores", icon: FiStar, route: "/administracao" },
- 
 ];
+
+const HelpFormModal = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    problem: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const remainingCharacters = 600 - formData.problem.length;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>Fale Conosco</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody>
+          <FormControl>
+            <FormLabel>Nome completo</FormLabel>
+            <Input
+              placeholder="Digite seu nome completo"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Email</FormLabel>
+            <Input
+              placeholder="Digite seu email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </FormControl>
+          <FormControl mt={4}>
+            <FormLabel>Relatar o problema</FormLabel>
+            <Textarea
+              placeholder="Descreva o problema"
+              name="problem"
+              value={formData.problem}
+              onChange={handleChange}
+              maxLength={600}
+            />
+            <Text fontSize="sm" color="gray.500">
+              Máximo de 600 caracteres. Restantes: {remainingCharacters}
+            </Text>
+          </FormControl>
+        </ModalBody>
+        <ModalFooter>
+          <Button colorScheme="blue" mr={3} onClick={onClose}>
+            Enviar
+          </Button>
+          <Button variant="ghost" onClick={onClose}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
 
 const SidebarContent = ({ onClose, onOpenHelpForm, ...rest }) => {
   const navigate = useNavigate();
@@ -163,13 +231,27 @@ const NavItem = ({ icon, route, isActive, children, ...rest }) => {
 
 const MobileNav = ({ onOpen, ...rest }) => {
   const navigate = useNavigate();
+  const [nomeUsuario, setNomeUsuario] = useState('');
+
+  // Obtém o nome do usuário do localStorage quando o componente é montado
+  useEffect(() => {
+    const nome = localStorage.getItem('nomeUsuario');
+    if (nome) {
+      setNomeUsuario(nome);
+    }
+  }, []);
 
   const handleLogoClick = () => {
     navigate("/HomePageLogada");
   };
+
   const handleSair = (e) => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('nomeUsuario'); // Limpa o nome do usuário no logout
     navigate("/login");
   };
+
   return (
     <Flex
       ml={{ base: 0, md: 60 }}
@@ -221,7 +303,7 @@ const MobileNav = ({ onOpen, ...rest }) => {
                   spacing="1px"
                   ml="2"
                 >
-                  <Text fontSize="sm">Thiago Ramos Duarte</Text>
+                  <Text fontSize="sm">{nomeUsuario || "Usuário"}</Text> {/* Aqui mostra o nome do usuário logado */}
                   <Text fontSize="xs" color="gray.600">
                     Gestor
                   </Text>
@@ -243,6 +325,10 @@ const MobileNav = ({ onOpen, ...rest }) => {
                 Incluir usuários
               </MenuItem>
               <MenuDivider borderColor="gray.400" />
+              <MenuItem onClick={() => navigate("/perfil")}>
+                Editar Perfil
+              </MenuItem>
+              <MenuDivider borderColor="gray.400" />
               <MenuItem onClick={handleSair} icon={<FiLogOut />}>
                 Sair
               </MenuItem>
@@ -251,75 +337,6 @@ const MobileNav = ({ onOpen, ...rest }) => {
         </Flex>
       </HStack>
     </Flex>
-  );
-};
-
-const HelpFormModal = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    problem: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const remainingCharacters = 600 - formData.problem.length;
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Fale Conosco</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <FormControl>
-            <FormLabel>Nome completo</FormLabel>
-            <Input
-              placeholder="Digite seu nome completo"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel>Email</FormLabel>
-            <Input
-              placeholder="Digite seu email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel>Relatar o problema</FormLabel>
-            <Textarea
-              placeholder="Descreva o problema"
-              name="problem"
-              value={formData.problem}
-              onChange={handleChange}
-              maxLength={600}
-            />
-            <Text fontSize="sm" color="gray.500">
-              Máximo de 600 caracteres. Restantes: {remainingCharacters}
-            </Text>
-          </FormControl>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="blue" mr={3} onClick={onClose}>
-            Enviar
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
   );
 };
 
