@@ -89,14 +89,6 @@ export default function IndicadorPage() {
           <Tbody>
             <Tr>
               <Td><Checkbox colorScheme="green" /></Td> 
-              <Td>89</Td>
-              <Td>BIBLIO I.1</Td>
-              <Td>Quantidade de Empréstimos</Td>
-              <Td>BIBLIO Biblioteca</Td>
-              <Td>Qtd.</Td>
-              <Td>Monitoramento Operacional</Td>
-              <Td>-</Td>
-              <Td>Igor Guevara</Td>
               <Td>
                 <IconButton aria-label='Search database' icon={<FaSearch />} size="sm" />
                 <IconButton aria-label='Edit entry' icon={<FaRegEdit />} size="sm" />

@@ -14,8 +14,11 @@ import {
   Textarea,
   VStack,
   Heading,
+  Text,
 } from '@chakra-ui/react';
 import Header from '../../components/Header';
+import { evaluate } from 'mathjs'; // Import mathjs for formula evaluation
+import axios from 'axios'; // Import axios
 
 const FormGroup = ({ label, children }) => (
   <FormControl>
@@ -35,9 +38,9 @@ const AdminPage = () => {
     descricaoIndicador: '',
     finalidadeIndicador: '',
     dimensaoDesempenho: '',
-    quantidadeComponentes: '',
-    componentes: [],
+    componentes: [], // Now each component will have a name and a value
     formula: '',
+    formulaResult: null, // To store the result of the formula
     fonteFormaColeta: '',
     pesoIndicador: '',
     interpretacaoIndicador: '',
@@ -56,30 +59,60 @@ const AdminPage = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Função para lidar com mudanças na quantidade de componentes
-  const handleQuantidadeChange = (e) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 0) {
+  // Função para adicionar um novo componente (até 4)
+  const handleAddComponent = () => {
+    if (formData.componentes.length < 4) {
       setFormData({
         ...formData,
-        quantidadeComponentes: value,
-        componentes: Array(value).fill(''),
+        componentes: [...formData.componentes, { name: '', value: '' }],
       });
+    } else {
+      alert('Você só pode adicionar até 4 componentes.');
     }
   };
 
   // Função para lidar com mudanças nos campos de componentes
-  const handleComponentChange = (index, value) => {
+  const handleComponentChange = (index, field, value) => {
     const newComponentes = [...formData.componentes];
-    newComponentes[index] = value;
+    newComponentes[index][field] = value;
     setFormData({ ...formData, componentes: newComponentes });
   };
 
-  // Função para simular o envio dos dados
-  const handleSave = () => {
-    // Aqui você pode verificar os dados do formulário
-    console.log('Dados do formulário:', formData);
-    alert('Dados capturados com sucesso! Confira o console para ver os detalhes.');
+  // Função para deletar um componente específico
+  const handleDeleteComponent = (index) => {
+    const newComponentes = formData.componentes.filter((_, i) => i !== index);
+    setFormData({ ...formData, componentes: newComponentes });
+  };
+
+  // Função para avaliar a fórmula
+  const evaluateFormula = () => {
+    try {
+      // Criar um objeto com as variáveis da fórmula
+      const variables = {};
+      formData.componentes.forEach((component) => {
+        if (component.name && component.value !== '') {
+          variables[component.name] = parseFloat(component.value);
+        }
+      });
+
+      // Avaliar a fórmula usando as variáveis
+      const result = evaluate(formData.formula, variables);
+      setFormData({ ...formData, formulaResult: result });
+    } catch (error) {
+      alert('Erro ao avaliar a fórmula. Verifique se a fórmula está correta e se todas as variáveis estão definidas.');
+    }
+  };
+
+  // Função para salvar os dados no backend
+  const handleSave = async () => {
+    try {
+      // Enviar os dados para o backend
+      const response = await axios.post('URL_DO_SEU_ENDPOINT', formData);
+      alert('Dados salvos com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar os dados:', error);
+      alert('Ocorreu um erro ao salvar os dados.');
+    }
   };
 
   const renderGeneralTab = () => (
@@ -156,35 +189,50 @@ const AdminPage = () => {
           <option value="E6">Economicidade (E6)</option>
         </Select>
       </FormGroup>
-      <FormGroup label="Quantidade de Componentes da Fórmula">
-        <Input 
-          type="number" 
-          name="quantidadeComponentes" 
-          value={formData.quantidadeComponentes} 
-          onChange={handleQuantidadeChange}
-          placeholder="Digite o número de componentes"
-        />
-      </FormGroup>
 
-      {/* Renderizar campos de descrição dos componentes com base na quantidade */}
-      {Array.from({ length: formData.quantidadeComponentes }).map((_, index) => (
-        <FormGroup key={index} label={`Descrição do Componente ${index + 1}`}>
-          <Textarea
-            value={formData.componentes[index] || ''}
-            onChange={(e) => handleComponentChange(index, e.target.value)}
-            placeholder={`Descrição do Componente ${index + 1}`}
-          />
-        </FormGroup>
+      {/* Componentes */}
+      <Heading as="h3" size="md">Componentes</Heading>
+      {/* Botão para adicionar componentes */}
+      <Button onClick={handleAddComponent}>Adicionar Componente</Button>
+
+      {/* Renderizar campos de nome e valor dos componentes */}
+      {formData.componentes.map((component, index) => (
+        <Box key={index} borderWidth="1px" borderRadius="md" p={4}>
+          <FormGroup label={`Nome do Componente ${index + 1}`}>
+            <Input
+              value={component.name}
+              onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
+              placeholder={`Nome do Componente ${index + 1}`}
+            />
+          </FormGroup>
+          <FormGroup label={`Valor do Componente ${index + 1}`}>
+            <Input
+              type="number"
+              value={component.value}
+              onChange={(e) => handleComponentChange(index, 'value', e.target.value)}
+              placeholder={`Valor do Componente ${index + 1}`}
+            />
+          </FormGroup>
+          <Button colorScheme="red" onClick={() => handleDeleteComponent(index)}>
+            Excluir Componente
+          </Button>
+        </Box>
       ))}
 
-      <FormGroup label="Fórmula">
+      <FormGroup label="Fórmula (use os nomes dos componentes)">
         <Input 
           type="text" 
           name="formula" 
           value={formData.formula} 
           onChange={handleChange} 
+          placeholder="Exemplo: (processo / totalProcessos) * 100"
         />
       </FormGroup>
+      <Button onClick={evaluateFormula}>Calcular Fórmula</Button>
+      {formData.formulaResult !== null && (
+        <Text>Resultado da Fórmula: {formData.formulaResult}</Text>
+      )}
+
       <FormGroup label="Fonte/Forma de Coleta dos Dados">
         <Textarea 
           name="fonteFormaColeta" 
@@ -310,4 +358,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-
