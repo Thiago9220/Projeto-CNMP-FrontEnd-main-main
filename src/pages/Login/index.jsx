@@ -59,7 +59,7 @@ export default function LoginScreen() {
         <Stack spacing={4} w={'full'} maxW={'md'} as="form" onSubmit={handleLogin}>
           <Heading fontSize={'4xl'} color="gray.700">Entrar na sua conta</Heading>
           <FormControl id="email">
-            <FormLabel>Usuário</FormLabel>
+            <FormLabel>Email</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
                 <FaUser color="gray.300" />
