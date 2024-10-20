@@ -50,93 +50,19 @@ import { useState, useEffect } from "react";
 import cnmpffImage from "../../assets/cnmpff.png";
 import logoImage from "../../assets/logo.png";
 
-const LinkItems = [
-  { name: "Indicadores", icon: FiHome, route: "/HomePageLogada" },
-  { name: "Medições de indicador", icon: FiTrendingUp, route: "" },
-  {
-    name: "Cadastrar usuários",
-    icon: FiUserPlus,
-    route: "/Cadastramentodeusuário",
-  },
-  { name: "Incluir indicadores", icon: FiStar, route: "/administracao" },
-];
-
-const HelpFormModal = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    problem: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const remainingCharacters = 600 - formData.problem.length;
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Fale Conosco</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <FormControl>
-            <FormLabel>Nome completo</FormLabel>
-            <Input
-              placeholder="Digite seu nome completo"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel>Email</FormLabel>
-            <Input
-              placeholder="Digite seu email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </FormControl>
-          <FormControl mt={4}>
-            <FormLabel>Relatar o problema</FormLabel>
-            <Textarea
-              placeholder="Descreva o problema"
-              name="problem"
-              value={formData.problem}
-              onChange={handleChange}
-              maxLength={600}
-            />
-            <Text fontSize="sm" color="gray.500">
-              Máximo de 600 caracteres. Restantes: {remainingCharacters}
-            </Text>
-          </FormControl>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="blue" mr={3} onClick={onClose}>
-            Enviar
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-};
-
-const SidebarContent = ({ onClose, onOpenHelpForm, ...rest }) => {
+const SidebarContent = ({ onClose, onOpenHelpForm, isNormalUser, ...rest }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogoClick = () => {
-    navigate("/HomePageLogada");
-  };
+  // Links baseados no perfil do usuário
+  const LinkItems = isNormalUser
+    ? [{ name: "Medições de indicador", icon: FiTrendingUp, route: "/medicoes" }]
+    : [
+        { name: "Indicadores", icon: FiHome, route: "/HomePageLogada" },
+        { name: "Medições de indicador", icon: FiTrendingUp, route: "/medicoes" },
+        { name: "Cadastrar usuários", icon: FiUserPlus, route: "/Cadastramentodeusuario" },
+        { name: "Incluir indicadores", icon: FiStar, route: "/administracao" },
+      ];
 
   return (
     <Box
@@ -155,7 +81,7 @@ const SidebarContent = ({ onClose, onOpenHelpForm, ...rest }) => {
           h="16"
           w="auto"
           cursor="pointer"
-          onClick={handleLogoClick}
+          onClick={() => navigate("/HomePageLogada")}
         />
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
       </Flex>
@@ -187,9 +113,6 @@ const SidebarContent = ({ onClose, onOpenHelpForm, ...rest }) => {
 const NavItem = ({ icon, route, isActive, children, ...rest }) => {
   const navigate = useNavigate();
 
-  const onClickNavigate = () => {
-    navigate(route);
-  };
   return (
     <Box
       as="a"
@@ -210,7 +133,7 @@ const NavItem = ({ icon, route, isActive, children, ...rest }) => {
           bg: "gray.300",
           color: "black",
         }}
-        onClick={onClickNavigate}
+        onClick={() => navigate(route)}
         {...rest}
       >
         {icon && (
@@ -229,26 +152,21 @@ const NavItem = ({ icon, route, isActive, children, ...rest }) => {
   );
 };
 
-const MobileNav = ({ onOpen, ...rest }) => {
+const MobileNav = ({ onOpen, isNormalUser, ...rest }) => {
   const navigate = useNavigate();
-  const [nomeUsuario, setNomeUsuario] = useState('');
+  const [nomeUsuario, setNomeUsuario] = useState("");
 
-  // Obtém o nome do usuário do localStorage quando o componente é montado
   useEffect(() => {
-    const nome = localStorage.getItem('nomeUsuario');
+    const nome = localStorage.getItem("nomeUsuario");
     if (nome) {
       setNomeUsuario(nome);
     }
   }, []);
 
-  const handleLogoClick = () => {
-    navigate("/HomePageLogada");
-  };
-
-  const handleSair = (e) => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('nomeUsuario'); // Limpa o nome do usuário no logout
+  const handleSair = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("nomeUsuario");
     navigate("/login");
   };
 
@@ -271,16 +189,13 @@ const MobileNav = ({ onOpen, ...rest }) => {
         aria-label="open menu"
         icon={<FiMenu />}
       />
-
       <Image
         display={{ base: "flex", md: "none" }}
         src={logoImage}
         h="12"
         w="auto"
         cursor="pointer"
-        onClick={handleLogoClick}
       />
-
       <HStack spacing={{ base: "0", md: "6" }}>
         <IconButton
           size="lg"
@@ -303,9 +218,9 @@ const MobileNav = ({ onOpen, ...rest }) => {
                   spacing="1px"
                   ml="2"
                 >
-                  <Text fontSize="sm">{nomeUsuario || "Usuário"}</Text> {/* Aqui mostra o nome do usuário logado */}
+                  <Text fontSize="sm">{nomeUsuario || "Usuário"}</Text>
                   <Text fontSize="xs" color="gray.600">
-                    Gestor
+                    {isNormalUser ? "Usuário" : "Gestor"}
                   </Text>
                 </VStack>
                 <Box display={{ base: "none", md: "flex" }}>
@@ -317,18 +232,6 @@ const MobileNav = ({ onOpen, ...rest }) => {
               bg={useColorModeValue("white", "gray.900")}
               borderColor={useColorModeValue("gray.200", "gray.700")}
             >
-              <MenuItem onClick={() => navigate("/administracao")}>
-                Incluir indicadores
-              </MenuItem>
-              <MenuDivider borderColor="gray.400" />
-              <MenuItem onClick={() => navigate("/Cadastramentodeusuário")}>
-                Incluir usuários
-              </MenuItem>
-              <MenuDivider borderColor="gray.400" />
-              <MenuItem onClick={() => navigate("/perfil")}>
-                Editar Perfil
-              </MenuItem>
-              <MenuDivider borderColor="gray.400" />
               <MenuItem onClick={handleSair} icon={<FiLogOut />}>
                 Sair
               </MenuItem>
@@ -342,17 +245,22 @@ const MobileNav = ({ onOpen, ...rest }) => {
 
 const SidebarWithHeader = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const {
-    isOpen: isHelpFormOpen,
-    onOpen: onOpenHelpForm,
-    onClose: onCloseHelpForm,
-  } = useDisclosure();
+  const { isOpen: isHelpFormOpen, onOpen: onOpenHelpForm, onClose: onCloseHelpForm } =
+    useDisclosure();
+
+  const [isNormalUser, setIsNormalUser] = useState(false);
+
+  useEffect(() => {
+    const perfilUsuario = localStorage.getItem("perfilUsuario");
+    setIsNormalUser(perfilUsuario === "usuario");
+  }, []);
 
   return (
     <Box minH="100vh" bg={useColorModeValue("white", "gray.900")}>
       <SidebarContent
         onClose={onClose}
         onOpenHelpForm={onOpenHelpForm}
+        isNormalUser={isNormalUser}
         display={{ base: "none", md: "block" }}
       />
       <Drawer
@@ -364,16 +272,13 @@ const SidebarWithHeader = ({ children }) => {
         size="full"
       >
         <DrawerContent>
-          <SidebarContent onClose={onClose} onOpenHelpForm={onOpenHelpForm} />
+          <SidebarContent onClose={onClose} onOpenHelpForm={onOpenHelpForm} isNormalUser={isNormalUser} />
         </DrawerContent>
       </Drawer>
-      {/* mobilenav */}
-      <MobileNav onOpen={onOpen} />
+      <MobileNav onOpen={onOpen} isNormalUser={isNormalUser} />
       <Box ml={{ base: 0, md: 60 }} p="4">
-        {/* Content */}
         {children}
       </Box>
-      <HelpFormModal isOpen={isHelpFormOpen} onClose={onCloseHelpForm} />
     </Box>
   );
 };
