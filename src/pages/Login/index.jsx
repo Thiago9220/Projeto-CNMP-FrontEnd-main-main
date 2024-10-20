@@ -29,29 +29,33 @@ export default function LoginScreen() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     // Verifica se os campos de email e senha estão preenchidos
     if (!email || !password) {
       setErrorMessage('Por favor, preencha ambos os campos.');
       return;
     }
-  
+
     try {
       const response = await axios.post('http://localhost:8000/login/', {
         email,
-        senha: password,  // Corrigir o nome do campo para 'senha'
+        senha: password,
       });
-  
-      const { access_token, nome } = response.data;  // Certifique-se de que o backend retorna o nome do usuário também
+
+      // Certifique-se de que o backend está retornando o perfil do usuário corretamente
+      const { access_token, nome, perfil } = response.data;
+
+      // Armazena o token, nome e perfil no localStorage
       localStorage.setItem('token', access_token);
-      localStorage.setItem('nomeUsuario', nome);  // Armazena o nome do usuário
+      localStorage.setItem('nomeUsuario', nome);
+      localStorage.setItem('perfilUsuario', perfil); // Armazena o perfil do usuário corretamente
+
+      // Redireciona para a página inicial logada
       navigate('/HomePageLogada');
     } catch (error) {
       setErrorMessage('Login falhou. Verifique suas credenciais.');
     }
   };
-  
-  
 
   return (
     <Stack minH={'100vh'} direction={{ base: 'column', md: 'row' }}>

@@ -16,7 +16,7 @@ import {
   Box,
   CloseButton,
   useToast
-} from '@chakra-ui/react'
+} from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom'; 
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 
@@ -50,7 +50,7 @@ export default function RegisterScreen() {
     }
 
     try {
-      // Fazer a requisição ao backend para registrar o usuário
+      // Fazer a requisição ao backend para registrar o usuário com perfil de gestor
       const response = await fetch('http://localhost:8000/usuarios/', {
         method: 'POST',
         headers: {
@@ -59,7 +59,8 @@ export default function RegisterScreen() {
         body: JSON.stringify({
           nome: nome,
           email: email,
-          senha: password
+          senha: password,
+          perfil: 'gestor' // Adiciona o perfil como gestor/admin automaticamente
         }),
       });
 
