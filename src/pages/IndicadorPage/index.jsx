@@ -1,3 +1,4 @@
+// IndicadorPage.js
 import React, { useEffect, useState } from 'react';
 import {
   Table,
@@ -31,10 +32,8 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { FaSearch, FaRegEdit } from "react-icons/fa";
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import { exportarSelecionadosParaPDF, exportarSelecionadosParaExcel } from '../exportPDFeExcell';
+import { toPng } from 'html-to-image';
 
 export default function IndicadorPage() {
   const [nomeUsuario, setNomeUsuario] = useState('');
@@ -51,16 +50,15 @@ export default function IndicadorPage() {
   const [selectedIndicators, setSelectedIndicators] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [indicadorSelecionado, setIndicadorSelecionado] = useState(null);
+  const [isViewMode, setIsViewMode] = useState(false); // Define o modo de visualização
   const toast = useToast();
 
   useEffect(() => {
-    // Buscar nome do usuário no localStorage
     const nome = localStorage.getItem('nomeUsuario');
     if (nome) {
       setNomeUsuario(nome);
     }
 
-    // Dados iniciais (fictícios)
     const dadosIniciais = [
       {
         codigo: 'BIBLIO I.1',
@@ -81,98 +79,6 @@ export default function IndicadorPage() {
         interpretacaoIndicador: 'Valores maiores indicam melhor desempenho',
         meta: '500',
         tiposAcumulacao: 'Soma',
-        polaridade: 'Positiva',
-        periodicidadeColeta: 'Mensal',
-        frequenciaMeta: 'Mensal',
-      },
-      {
-        codigo: 'FIN I.2',
-        nomeIndicador: 'Receita Mensal',
-        area: 'Financeiro',
-        unidadeMedida: 'R$',
-        classificador: 'Financeiro',
-        responsavel: 'Maria Silva',
-        objetivoEstrategico: 'Aumentar a lucratividade',
-        perspectivaEstrategica: 'Financeira',
-        descricaoObjetivoEstrategico: 'Maximizar os lucros da empresa',
-        descricaoIndicador: 'Total de receitas geradas no mês',
-        finalidadeIndicador: 'Avaliar o desempenho financeiro',
-        dimensaoDesempenho: 'Eficiência (E3)',
-        formula: 'Soma das receitas no período',
-        fonteFormaColeta: 'Sistema financeiro',
-        pesoIndicador: '2',
-        interpretacaoIndicador: 'Valores maiores indicam melhor desempenho',
-        meta: '100000',
-        tiposAcumulacao: 'Soma',
-        polaridade: 'Positiva',
-        periodicidadeColeta: 'Mensal',
-        frequenciaMeta: 'Mensal',
-      },
-      {
-        codigo: 'HR I.3',
-        nomeIndicador: 'Número de Contratações',
-        area: 'Recursos Humanos',
-        unidadeMedida: 'Qtd.',
-        classificador: 'RH',
-        responsavel: 'José Santos',
-        objetivoEstrategico: 'Expandir a equipe',
-        perspectivaEstrategica: 'Crescimento',
-        descricaoObjetivoEstrategico: 'Aumentar o quadro de funcionários',
-        descricaoIndicador: 'Quantidade de novas contratações',
-        finalidadeIndicador: 'Medir a expansão da equipe',
-        dimensaoDesempenho: 'Eficácia (E2)',
-        formula: 'Total de contratações no período',
-        fonteFormaColeta: 'Sistema de RH',
-        pesoIndicador: '1',
-        interpretacaoIndicador: 'Valores maiores indicam crescimento',
-        meta: '10',
-        tiposAcumulacao: 'Soma',
-        polaridade: 'Positiva',
-        periodicidadeColeta: 'Mensal',
-        frequenciaMeta: 'Mensal',
-      },
-      {
-        codigo: 'ENG I.4',
-        nomeIndicador: 'Projetos Concluídos',
-        area: 'Engenharia',
-        unidadeMedida: 'Qtd.',
-        classificador: 'Projetos',
-        responsavel: 'Ana Oliveira',
-        objetivoEstrategico: 'Melhorar a eficiência',
-        perspectivaEstrategica: 'Processos Internos',
-        descricaoObjetivoEstrategico: 'Aumentar a taxa de conclusão de projetos',
-        descricaoIndicador: 'Número de projetos finalizados',
-        finalidadeIndicador: 'Avaliar a produtividade da equipe',
-        dimensaoDesempenho: 'Eficiência (E3)',
-        formula: 'Total de projetos concluídos no período',
-        fonteFormaColeta: 'Sistema de gerenciamento de projetos',
-        pesoIndicador: '1.5',
-        interpretacaoIndicador: 'Valores maiores indicam maior produtividade',
-        meta: '5',
-        tiposAcumulacao: 'Soma',
-        polaridade: 'Positiva',
-        periodicidadeColeta: 'Mensal',
-        frequenciaMeta: 'Mensal',
-      },
-      {
-        codigo: 'MKT I.5',
-        nomeIndicador: 'Engajamento em Redes Sociais',
-        area: 'Marketing',
-        unidadeMedida: '%',
-        classificador: 'Marketing Digital',
-        responsavel: 'Pedro Lima',
-        objetivoEstrategico: 'Aumentar a visibilidade da marca',
-        perspectivaEstrategica: 'Clientes',
-        descricaoObjetivoEstrategico: 'Melhorar a interação com o público',
-        descricaoIndicador: 'Taxa de engajamento nas redes sociais',
-        finalidadeIndicador: 'Avaliar a eficácia das campanhas digitais',
-        dimensaoDesempenho: 'Eficácia (E2)',
-        formula: '(Total de interações / Total de seguidores) * 100',
-        fonteFormaColeta: 'Ferramentas de análise de redes sociais',
-        pesoIndicador: '1',
-        interpretacaoIndicador: 'Valores maiores indicam melhor engajamento',
-        meta: '15',
-        tiposAcumulacao: 'Média',
         polaridade: 'Positiva',
         periodicidadeColeta: 'Mensal',
         frequenciaMeta: 'Mensal',
@@ -201,7 +107,7 @@ export default function IndicadorPage() {
       );
     });
     setDadosFiltrados(filtrados);
-    setSelectedIndicators([]); // Limpar seleção após filtrar
+    setSelectedIndicators([]);
   };
 
   const handleLimpar = () => {
@@ -214,11 +120,18 @@ export default function IndicadorPage() {
       responsavel: '',
     });
     setDadosFiltrados(indicadores);
-    setSelectedIndicators([]); // Limpar seleção após limpar filtros
+    setSelectedIndicators([]);
+  };
+
+  const handleViewClick = (indicador) => {
+    setIndicadorSelecionado(indicador);
+    setIsViewMode(true); // Define o modal como modo de visualização
+    setIsModalOpen(true);
   };
 
   const handleEditClick = (indicador) => {
     setIndicadorSelecionado(indicador);
+    setIsViewMode(false); // Define o modal como modo de edição
     setIsModalOpen(true);
   };
 
@@ -236,7 +149,6 @@ export default function IndicadorPage() {
   };
 
   const handleSaveChanges = () => {
-    // Atualizar o indicador no array de indicadores
     const updatedIndicadores = indicadores.map((item) =>
       item.codigo === indicadorSelecionado.codigo ? indicadorSelecionado : item
     );
@@ -252,119 +164,35 @@ export default function IndicadorPage() {
     });
   };
 
+  const handlePrint = () => {
+    const elemento = document.getElementById('modal-content');
+    if (elemento) {
+      toPng(elemento)
+        .then((dataUrl) => {
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `${indicadorSelecionado.codigo}-visualizacao.png`;
+          link.click();
+        })
+        .catch((err) => {
+          console.error('Erro ao capturar imagem:', err);
+          toast({
+            title: 'Erro',
+            description: 'Erro ao gerar a imagem do indicador.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          });
+        });
+    }
+  };
+
   const FormGroup = ({ label, children }) => (
-    <FormControl isRequired mb={3}>
+    <FormControl mb={3}>
       <FormLabel>{label}</FormLabel>
       {children}
     </FormControl>
   );
-
-  // Função para lidar com a seleção de indicadores
-  const handleCheckboxChange = (codigo) => {
-    setSelectedIndicators((prevSelected) => {
-      if (prevSelected.includes(codigo)) {
-        // Remover do selecionado
-        return prevSelected.filter((item) => item !== codigo);
-      } else {
-        // Adicionar ao selecionado
-        return [...prevSelected, codigo];
-      }
-    });
-  };
-
-  // Função para selecionar/desmarcar todos
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allCodes = dadosFiltrados.map((item) => item.codigo);
-      setSelectedIndicators(allCodes);
-    } else {
-      setSelectedIndicators([]);
-    }
-  };
-
-  // Função para exportar indicadores selecionados para PDF
-  const exportarSelecionadosParaPDF = () => {
-    if (selectedIndicators.length === 0) {
-      toast({
-        title: 'Nenhum indicador selecionado',
-        description: 'Por favor, selecione pelo menos um indicador para exportar.',
-        status: 'warning',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    const doc = new jsPDF();
-
-    // Definir as colunas
-    const colunas = [
-      { header: 'Código', dataKey: 'codigo' },
-      { header: 'Nome Indicador', dataKey: 'nomeIndicador' },
-      { header: 'Área', dataKey: 'area' },
-      { header: 'Unid. Med.', dataKey: 'unidadeMedida' },
-      { header: 'Classificador', dataKey: 'classificador' },
-      { header: 'Responsável', dataKey: 'responsavel' },
-    ];
-
-    // Obter os dados dos indicadores selecionados
-    const dados = indicadores
-      .filter((item) => selectedIndicators.includes(item.codigo))
-      .map((item) => ({
-        codigo: item.codigo,
-        nomeIndicador: item.nomeIndicador,
-        area: item.area,
-        unidadeMedida: item.unidadeMedida,
-        classificador: item.classificador,
-        responsavel: item.responsavel,
-      }));
-
-    // Gerar a tabela no PDF usando autoTable
-    autoTable(doc, {
-      columns: colunas,
-      body: dados,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [22, 160, 133] },
-    });
-
-    // Salvar o PDF
-    doc.save('indicadores_selecionados.pdf');
-  };
-
-  // Função para exportar indicadores selecionados para Excel
-  const exportarSelecionadosParaExcel = () => {
-    if (selectedIndicators.length === 0) {
-      toast({
-        title: 'Nenhum indicador selecionado',
-        description: 'Por favor, selecione pelo menos um indicador para exportar.',
-        status: 'warning',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    // Obter os dados dos indicadores selecionados
-    const dados = indicadores
-      .filter((item) => selectedIndicators.includes(item.codigo))
-      .map((item) => ({
-        Código: item.codigo,
-        'Nome Indicador': item.nomeIndicador,
-        Área: item.area,
-        'Unid. Med.': item.unidadeMedida,
-        Classificador: item.classificador,
-        Responsável: item.responsavel,
-      }));
-
-    // Criar uma nova planilha
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Indicadores Selecionados');
-
-    // Gerar o arquivo Excel
-    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'indicadores_selecionados.xlsx');
-  };
 
   return (
     <Box>
@@ -374,12 +202,11 @@ export default function IndicadorPage() {
         </Text>
       </Box>
 
-      {/* Botões de exportação dos indicadores selecionados */}
       <HStack spacing={4} mb={4}>
-        <Button colorScheme="red" onClick={exportarSelecionadosParaPDF}>
+        <Button colorScheme="red" onClick={() => exportarSelecionadosParaPDF(selectedIndicators, indicadores, toast)}>
           Exportar Selecionados para PDF
         </Button>
-        <Button colorScheme="green" onClick={exportarSelecionadosParaExcel}>
+        <Button colorScheme="green" onClick={() => exportarSelecionadosParaExcel(selectedIndicators, indicadores, toast)}>
           Exportar Selecionados para Excel
         </Button>
       </HStack>
@@ -393,7 +220,9 @@ export default function IndicadorPage() {
                   colorScheme="green"
                   isChecked={selectedIndicators.length === dadosFiltrados.length && dadosFiltrados.length > 0}
                   isIndeterminate={selectedIndicators.length > 0 && selectedIndicators.length < dadosFiltrados.length}
-                  onChange={handleSelectAll}
+                  onChange={(e) => {
+                    setSelectedIndicators(e.target.checked ? dadosFiltrados.map((item) => item.codigo) : []);
+                  }}
                 />
               </Th>
               <Th>Código</Th>
@@ -497,7 +326,13 @@ export default function IndicadorPage() {
                   <Checkbox
                     colorScheme="green"
                     isChecked={selectedIndicators.includes(item.codigo)}
-                    onChange={() => handleCheckboxChange(item.codigo)}
+                    onChange={() => {
+                      setSelectedIndicators((prevSelected) =>
+                        prevSelected.includes(item.codigo)
+                          ? prevSelected.filter((codigo) => codigo !== item.codigo)
+                          : [...prevSelected, item.codigo]
+                      );
+                    }}
                   />
                 </Td>
                 <Td>{item.codigo}</Td>
@@ -508,14 +343,14 @@ export default function IndicadorPage() {
                 <Td>{item.responsavel}</Td>
                 <Td>
                   <IconButton
-                    aria-label='Visualizar'
+                    aria-label="Visualizar"
                     icon={<FaSearch />}
                     size="sm"
                     mr={2}
-                    onClick={() => handleEditClick(item)}
+                    onClick={() => handleViewClick(item)}
                   />
                   <IconButton
-                    aria-label='Editar'
+                    aria-label="Editar"
                     icon={<FaRegEdit />}
                     size="sm"
                     onClick={() => handleEditClick(item)}
@@ -524,31 +359,26 @@ export default function IndicadorPage() {
               </Tr>
             ))}
           </Tbody>
-          <Tfoot>
-            {/* ... */}
-          </Tfoot>
+          <Tfoot></Tfoot>
         </Table>
       </TableContainer>
 
-      {/* Modal de Edição */}
       {indicadorSelecionado && (
         <Modal isOpen={isModalOpen} onClose={handleModalClose} size="xl">
           <ModalOverlay />
-          <ModalContent maxH="80vh" overflowY="auto">
-            <ModalHeader>Editar Indicador</ModalHeader>
+          <ModalContent maxH="80vh" overflowY="auto" id="modal-content">
+            <ModalHeader>{isViewMode ? 'Visualizar Indicador' : 'Editar Indicador'}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
               <VStack spacing={4} align="stretch">
-                {/* POSICIONAMENTO NO MAPA ESTRATÉGICO */}
-                <Heading as="h2" size="md">
-                  Posicionamento no Mapa Estratégico
-                </Heading>
+                <Heading as="h2" size="md">Posicionamento no Mapa Estratégico</Heading>
                 <FormGroup label="Código do Indicador">
                   <Input
                     type="text"
                     name="codigo"
                     value={indicadorSelecionado.codigo}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Nome do Indicador">
@@ -557,6 +387,7 @@ export default function IndicadorPage() {
                     name="nomeIndicador"
                     value={indicadorSelecionado.nomeIndicador}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Objetivo Estratégico Associado">
@@ -565,6 +396,7 @@ export default function IndicadorPage() {
                     name="objetivoEstrategico"
                     value={indicadorSelecionado.objetivoEstrategico || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Perspectiva Estratégica">
@@ -573,6 +405,7 @@ export default function IndicadorPage() {
                     name="perspectivaEstrategica"
                     value={indicadorSelecionado.perspectivaEstrategica || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Descrição do Objetivo Estratégico">
@@ -580,18 +413,17 @@ export default function IndicadorPage() {
                     name="descricaoObjetivoEstrategico"
                     value={indicadorSelecionado.descricaoObjetivoEstrategico || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
 
-                {/* INFORMAÇÕES GERAIS */}
-                <Heading as="h2" size="md">
-                  Informações Gerais
-                </Heading>
+                <Heading as="h2" size="md">Informações Gerais</Heading>
                 <FormGroup label="Descrição do Indicador">
                   <Textarea
                     name="descricaoIndicador"
                     value={indicadorSelecionado.descricaoIndicador || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Finalidade do Indicador">
@@ -599,6 +431,7 @@ export default function IndicadorPage() {
                     name="finalidadeIndicador"
                     value={indicadorSelecionado.finalidadeIndicador || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Dimensão do Desempenho">
@@ -607,6 +440,7 @@ export default function IndicadorPage() {
                     value={indicadorSelecionado.dimensaoDesempenho || ''}
                     onChange={handleInputChange}
                     placeholder="Selecione a dimensão do desempenho"
+                    isDisabled={isViewMode}
                   >
                     <option value="Efetividade (E1)">Efetividade (E1)</option>
                     <option value="Eficácia (E2)">Eficácia (E2)</option>
@@ -623,6 +457,7 @@ export default function IndicadorPage() {
                     name="formula"
                     value={indicadorSelecionado.formula || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Fonte/Forma de Coleta dos Dados">
@@ -630,6 +465,7 @@ export default function IndicadorPage() {
                     name="fonteFormaColeta"
                     value={indicadorSelecionado.fonteFormaColeta || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Peso do Indicador">
@@ -638,6 +474,7 @@ export default function IndicadorPage() {
                     name="pesoIndicador"
                     value={indicadorSelecionado.pesoIndicador || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Interpretação do Indicador/Recomendações">
@@ -645,6 +482,7 @@ export default function IndicadorPage() {
                     name="interpretacaoIndicador"
                     value={indicadorSelecionado.interpretacaoIndicador || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Área Responsável">
@@ -653,19 +491,18 @@ export default function IndicadorPage() {
                     name="area"
                     value={indicadorSelecionado.area || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
 
-                {/* DESEMPENHO */}
-                <Heading as="h2" size="md">
-                  Desempenho
-                </Heading>
+                <Heading as="h2" size="md">Desempenho</Heading>
                 <FormGroup label="Meta">
                   <Input
                     type="number"
                     name="meta"
                     value={indicadorSelecionado.meta || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
                 <FormGroup label="Tipos de Acumulação">
@@ -674,6 +511,7 @@ export default function IndicadorPage() {
                     value={indicadorSelecionado.tiposAcumulacao || ''}
                     onChange={handleInputChange}
                     placeholder="Selecione o tipo de acumulação"
+                    isDisabled={isViewMode}
                   >
                     <option value="Saldo">Saldo</option>
                     <option value="Soma">Soma</option>
@@ -686,6 +524,7 @@ export default function IndicadorPage() {
                     value={indicadorSelecionado.polaridade || ''}
                     onChange={handleInputChange}
                     placeholder="Selecione a polaridade"
+                    isDisabled={isViewMode}
                   >
                     <option value="Negativa">Negativa</option>
                     <option value="Positiva">Positiva</option>
@@ -698,6 +537,7 @@ export default function IndicadorPage() {
                     value={indicadorSelecionado.periodicidadeColeta || ''}
                     onChange={handleInputChange}
                     placeholder="Selecione a periodicidade de coleta"
+                    isDisabled={isViewMode}
                   >
                     <option value="Mensal">Mensal</option>
                     <option value="Bimestral">Bimestral</option>
@@ -715,6 +555,7 @@ export default function IndicadorPage() {
                     value={indicadorSelecionado.frequenciaMeta || ''}
                     onChange={handleInputChange}
                     placeholder="Selecione a frequência da meta"
+                    isDisabled={isViewMode}
                   >
                     <option value="Mensal">Mensal</option>
                     <option value="Bimestral">Bimestral</option>
@@ -732,15 +573,22 @@ export default function IndicadorPage() {
                     name="unidadeMedida"
                     value={indicadorSelecionado.unidadeMedida || ''}
                     onChange={handleInputChange}
+                    isReadOnly={isViewMode}
                   />
                 </FormGroup>
               </VStack>
             </ModalBody>
 
             <ModalFooter>
-              <Button colorScheme="red" mr={3} onClick={handleSaveChanges}>
-                Salvar
-              </Button>
+              {isViewMode ? (
+                <Button colorScheme="blue" onClick={handlePrint}>
+                  Tirar Print
+                </Button>
+              ) : (
+                <Button colorScheme="red" mr={3} onClick={handleSaveChanges}>
+                  Salvar
+                </Button>
+              )}
               <Button variant="ghost" onClick={handleModalClose}>
                 Cancelar
               </Button>
@@ -754,7 +602,7 @@ export default function IndicadorPage() {
 
 
 
-
+// IndicadorPage.js
 // import React, { useEffect, useState } from 'react';
 // import {
 //   Table,
@@ -788,6 +636,9 @@ export default function IndicadorPage() {
 //   useToast,
 // } from '@chakra-ui/react';
 // import { FaSearch, FaRegEdit } from "react-icons/fa";
+// import { exportarSelecionadosParaPDF, exportarSelecionadosParaExcel } from '../exportPDFeExcell';
+
+
 
 // export default function IndicadorPage() {
 //   const [nomeUsuario, setNomeUsuario] = useState('');
@@ -801,18 +652,17 @@ export default function IndicadorPage() {
 //     responsavel: '',
 //   });
 //   const [dadosFiltrados, setDadosFiltrados] = useState([]);
+//   const [selectedIndicators, setSelectedIndicators] = useState([]);
 //   const [isModalOpen, setIsModalOpen] = useState(false);
 //   const [indicadorSelecionado, setIndicadorSelecionado] = useState(null);
 //   const toast = useToast();
 
 //   useEffect(() => {
-//     // Buscar nome do usuário no localStorage
 //     const nome = localStorage.getItem('nomeUsuario');
 //     if (nome) {
 //       setNomeUsuario(nome);
 //     }
 
-//     // Dados iniciais (fictícios)
 //     const dadosIniciais = [
 //       {
 //         codigo: 'BIBLIO I.1',
@@ -833,98 +683,6 @@ export default function IndicadorPage() {
 //         interpretacaoIndicador: 'Valores maiores indicam melhor desempenho',
 //         meta: '500',
 //         tiposAcumulacao: 'Soma',
-//         polaridade: 'Positiva',
-//         periodicidadeColeta: 'Mensal',
-//         frequenciaMeta: 'Mensal',
-//       },
-//       {
-//         codigo: 'FIN I.2',
-//         nomeIndicador: 'Receita Mensal',
-//         area: 'Financeiro',
-//         unidadeMedida: 'R$',
-//         classificador: 'Financeiro',
-//         responsavel: 'Maria Silva',
-//         objetivoEstrategico: 'Aumentar a lucratividade',
-//         perspectivaEstrategica: 'Financeira',
-//         descricaoObjetivoEstrategico: 'Maximizar os lucros da empresa',
-//         descricaoIndicador: 'Total de receitas geradas no mês',
-//         finalidadeIndicador: 'Avaliar o desempenho financeiro',
-//         dimensaoDesempenho: 'Eficiência (E3)',
-//         formula: 'Soma das receitas no período',
-//         fonteFormaColeta: 'Sistema financeiro',
-//         pesoIndicador: '2',
-//         interpretacaoIndicador: 'Valores maiores indicam melhor desempenho',
-//         meta: '100000',
-//         tiposAcumulacao: 'Soma',
-//         polaridade: 'Positiva',
-//         periodicidadeColeta: 'Mensal',
-//         frequenciaMeta: 'Mensal',
-//       },
-//       {
-//         codigo: 'HR I.3',
-//         nomeIndicador: 'Número de Contratações',
-//         area: 'Recursos Humanos',
-//         unidadeMedida: 'Qtd.',
-//         classificador: 'RH',
-//         responsavel: 'José Santos',
-//         objetivoEstrategico: 'Expandir a equipe',
-//         perspectivaEstrategica: 'Crescimento',
-//         descricaoObjetivoEstrategico: 'Aumentar o quadro de funcionários',
-//         descricaoIndicador: 'Quantidade de novas contratações',
-//         finalidadeIndicador: 'Medir a expansão da equipe',
-//         dimensaoDesempenho: 'Eficácia (E2)',
-//         formula: 'Total de contratações no período',
-//         fonteFormaColeta: 'Sistema de RH',
-//         pesoIndicador: '1',
-//         interpretacaoIndicador: 'Valores maiores indicam crescimento',
-//         meta: '10',
-//         tiposAcumulacao: 'Soma',
-//         polaridade: 'Positiva',
-//         periodicidadeColeta: 'Mensal',
-//         frequenciaMeta: 'Mensal',
-//       },
-//       {
-//         codigo: 'ENG I.4',
-//         nomeIndicador: 'Projetos Concluídos',
-//         area: 'Engenharia',
-//         unidadeMedida: 'Qtd.',
-//         classificador: 'Projetos',
-//         responsavel: 'Ana Oliveira',
-//         objetivoEstrategico: 'Melhorar a eficiência',
-//         perspectivaEstrategica: 'Processos Internos',
-//         descricaoObjetivoEstrategico: 'Aumentar a taxa de conclusão de projetos',
-//         descricaoIndicador: 'Número de projetos finalizados',
-//         finalidadeIndicador: 'Avaliar a produtividade da equipe',
-//         dimensaoDesempenho: 'Eficiência (E3)',
-//         formula: 'Total de projetos concluídos no período',
-//         fonteFormaColeta: 'Sistema de gerenciamento de projetos',
-//         pesoIndicador: '1.5',
-//         interpretacaoIndicador: 'Valores maiores indicam maior produtividade',
-//         meta: '5',
-//         tiposAcumulacao: 'Soma',
-//         polaridade: 'Positiva',
-//         periodicidadeColeta: 'Mensal',
-//         frequenciaMeta: 'Mensal',
-//       },
-//       {
-//         codigo: 'MKT I.5',
-//         nomeIndicador: 'Engajamento em Redes Sociais',
-//         area: 'Marketing',
-//         unidadeMedida: '%',
-//         classificador: 'Marketing Digital',
-//         responsavel: 'Pedro Lima',
-//         objetivoEstrategico: 'Aumentar a visibilidade da marca',
-//         perspectivaEstrategica: 'Clientes',
-//         descricaoObjetivoEstrategico: 'Melhorar a interação com o público',
-//         descricaoIndicador: 'Taxa de engajamento nas redes sociais',
-//         finalidadeIndicador: 'Avaliar a eficácia das campanhas digitais',
-//         dimensaoDesempenho: 'Eficácia (E2)',
-//         formula: '(Total de interações / Total de seguidores) * 100',
-//         fonteFormaColeta: 'Ferramentas de análise de redes sociais',
-//         pesoIndicador: '1',
-//         interpretacaoIndicador: 'Valores maiores indicam melhor engajamento',
-//         meta: '15',
-//         tiposAcumulacao: 'Média',
 //         polaridade: 'Positiva',
 //         periodicidadeColeta: 'Mensal',
 //         frequenciaMeta: 'Mensal',
@@ -953,6 +711,7 @@ export default function IndicadorPage() {
 //       );
 //     });
 //     setDadosFiltrados(filtrados);
+//     setSelectedIndicators([]); 
 //   };
 
 //   const handleLimpar = () => {
@@ -965,6 +724,7 @@ export default function IndicadorPage() {
 //       responsavel: '',
 //     });
 //     setDadosFiltrados(indicadores);
+//     setSelectedIndicators([]);
 //   };
 
 //   const handleEditClick = (indicador) => {
@@ -986,7 +746,6 @@ export default function IndicadorPage() {
 //   };
 
 //   const handleSaveChanges = () => {
-//     // Atualizar o indicador no array de indicadores
 //     const updatedIndicadores = indicadores.map((item) =>
 //       item.codigo === indicadorSelecionado.codigo ? indicadorSelecionado : item
 //     );
@@ -1009,6 +768,25 @@ export default function IndicadorPage() {
 //     </FormControl>
 //   );
 
+//   const handleCheckboxChange = (codigo) => {
+//     setSelectedIndicators((prevSelected) => {
+//       if (prevSelected.includes(codigo)) {
+//         return prevSelected.filter((item) => item !== codigo);
+//       } else {
+//         return [...prevSelected, codigo];
+//       }
+//     });
+//   };
+
+//   const handleSelectAll = (e) => {
+//     if (e.target.checked) {
+//       const allCodes = dadosFiltrados.map((item) => item.codigo);
+//       setSelectedIndicators(allCodes);
+//     } else {
+//       setSelectedIndicators([]);
+//     }
+//   };
+
 //   return (
 //     <Box>
 //       <Box mb={4}>
@@ -1016,11 +794,28 @@ export default function IndicadorPage() {
 //           Bem-vindo, {nomeUsuario ? nomeUsuario : 'Usuário'}!
 //         </Text>
 //       </Box>
+
+//       <HStack spacing={4} mb={4}>
+//         <Button colorScheme="red" onClick={() => exportarSelecionadosParaPDF(selectedIndicators, indicadores, toast)}>
+//           Exportar Selecionados para PDF
+//         </Button>
+//         <Button colorScheme="green" onClick={() => exportarSelecionadosParaExcel(selectedIndicators, indicadores, toast)}>
+//           Exportar Selecionados para Excel
+//         </Button>
+//       </HStack>
+
 //       <TableContainer>
 //         <Table variant='striped'>
 //           <Thead>
 //             <Tr>
-//               <Th><Checkbox colorScheme="green" /></Th>
+//               <Th>
+//                 <Checkbox
+//                   colorScheme="green"
+//                   isChecked={selectedIndicators.length === dadosFiltrados.length && dadosFiltrados.length > 0}
+//                   isIndeterminate={selectedIndicators.length > 0 && selectedIndicators.length < dadosFiltrados.length}
+//                   onChange={handleSelectAll}
+//                 />
+//               </Th>
 //               <Th>Código</Th>
 //               <Th>Nome Indicador</Th>
 //               <Th>Área</Th>
@@ -1030,7 +825,7 @@ export default function IndicadorPage() {
 //               <Th>Ações</Th>
 //             </Tr>
 //             <Tr>
-//               <Th><Checkbox colorScheme="green" /></Th>
+//               <Th></Th>
 //               <Th>
 //                 <Input
 //                   size="sm"
@@ -1118,7 +913,13 @@ export default function IndicadorPage() {
 //           <Tbody>
 //             {dadosFiltrados.map((item, index) => (
 //               <Tr key={index}>
-//                 <Td><Checkbox colorScheme="green" /></Td>
+//                 <Td>
+//                   <Checkbox
+//                     colorScheme="green"
+//                     isChecked={selectedIndicators.includes(item.codigo)}
+//                     onChange={() => handleCheckboxChange(item.codigo)}
+//                   />
+//                 </Td>
 //                 <Td>{item.codigo}</Td>
 //                 <Td>{item.nomeIndicador}</Td>
 //                 <Td>{item.area}</Td>
@@ -1131,6 +932,7 @@ export default function IndicadorPage() {
 //                     icon={<FaSearch />}
 //                     size="sm"
 //                     mr={2}
+//                     onClick={() => handleEditClick(item)}
 //                   />
 //                   <IconButton
 //                     aria-label='Editar'
@@ -1143,21 +945,10 @@ export default function IndicadorPage() {
 //             ))}
 //           </Tbody>
 //           <Tfoot>
-//             <Tr>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//               <Th></Th>
-//             </Tr>
 //           </Tfoot>
 //         </Table>
 //       </TableContainer>
 
-//       {/* Modal de Edição */}
 //       {indicadorSelecionado && (
 //         <Modal isOpen={isModalOpen} onClose={handleModalClose} size="xl">
 //           <ModalOverlay />
@@ -1166,7 +957,6 @@ export default function IndicadorPage() {
 //             <ModalCloseButton />
 //             <ModalBody>
 //               <VStack spacing={4} align="stretch">
-//                 {/* POSICIONAMENTO NO MAPA ESTRATÉGICO */}
 //                 <Heading as="h2" size="md">
 //                   Posicionamento no Mapa Estratégico
 //                 </Heading>
@@ -1210,7 +1000,6 @@ export default function IndicadorPage() {
 //                   />
 //                 </FormGroup>
 
-//                 {/* INFORMAÇÕES GERAIS */}
 //                 <Heading as="h2" size="md">
 //                   Informações Gerais
 //                 </Heading>
@@ -1283,7 +1072,6 @@ export default function IndicadorPage() {
 //                   />
 //                 </FormGroup>
 
-//                 {/* DESEMPENHO */}
 //                 <Heading as="h2" size="md">
 //                   Desempenho
 //                 </Heading>
@@ -1378,3 +1166,5 @@ export default function IndicadorPage() {
 //     </Box>
 //   );
 // }
+
+

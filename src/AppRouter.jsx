@@ -10,6 +10,7 @@ import CadastramentoUsuarioPage from './pages/CadastramentoUsuarioPage';
 import EditarPerfil from './pages/Perfil';
 import MedicoesPage from './pages/Medicoes'; 
 
+
 export const AppRouter = () => {
   return (
     <Router>

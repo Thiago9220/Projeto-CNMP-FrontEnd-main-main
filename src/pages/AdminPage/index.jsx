@@ -79,7 +79,7 @@ const AdminPage = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),
+       body: JSON.stringify(formData),
     })
       .then((response) => {
         if (!response.ok) {
@@ -206,14 +206,16 @@ const AdminPage = () => {
           placeholder="Digite a fórmula do indicador"
         />
       </FormGroup>
-      <FormGroup label="Fonte/Forma de Coleta dos Dados">
+      {/* Campo opcional "Fonte/Forma de Coleta dos Dados" */}
+      <FormControl>
+        <FormLabel>Fonte/Forma de Coleta dos Dados</FormLabel>
         <Textarea
           name="fonteFormaColeta"
           value={formData.fonteFormaColeta}
           onChange={handleChange}
           placeholder="Descreva a fonte e forma de coleta"
         />
-      </FormGroup>
+      </FormControl>
       <FormGroup label="Peso do Indicador">
         <Input
           type="number"
@@ -223,14 +225,16 @@ const AdminPage = () => {
           placeholder="Digite o peso do indicador"
         />
       </FormGroup>
-      <FormGroup label="Interpretação do Indicador/Recomendações">
+      {/* Campo opcional "Interpretação do Indicador/Recomendações" */}
+      <FormControl>
+        <FormLabel>Interpretação do Indicador/Recomendações</FormLabel>
         <Textarea
           name="interpretacaoIndicador"
           value={formData.interpretacaoIndicador}
           onChange={handleChange}
           placeholder="Descreva a interpretação ou recomendações"
         />
-      </FormGroup>
+      </FormControl>
       <FormGroup label="Área Responsável">
         <Input
           type="text"
@@ -243,7 +247,7 @@ const AdminPage = () => {
 
       {/* DESEMPENHO */}
       <Heading as="h2" size="lg">
-        Desempenho
+        Desempenhoco
       </Heading>
       <FormGroup label="Meta">
         <Input
@@ -400,7 +404,7 @@ export default AdminPage;
 //   <FormControl isRequired>
 //     <FormLabel>{label}</FormLabel>
 //     {children}
-//   </FormControl>
+//   </FormControl> 
 // );
 
 // const AdminPage = () => {
@@ -438,7 +442,7 @@ export default AdminPage;
 //     setFormData({ ...formData, [name]: value });
 //   };
 
-//   // Função para validar e simular o envio dos dados
+//   // Função para validar e enviar os dados para o backend
 //   const handleSave = () => {
 //     if (!formData.codigoIndicador || !formData.nomeIndicador) {
 //       toast({
@@ -451,17 +455,41 @@ export default AdminPage;
 //       return;
 //     }
 
-//     // Salvando os dados do formulário no localStorage
-//     localStorage.setItem('dadosIndicador', JSON.stringify(formData));
-
-//     setShowFicha(true); // Exibe a aba "Ficha" após salvar
-//     toast({
-//       title: 'Sucesso',
-//       description: 'Dados capturados com sucesso.',
-//       status: 'success',
-//       duration: 5000,
-//       isClosable: true,
-//     });
+//     // Enviando os dados para o backend
+//     fetch('http://localhost:8000/indicadores/', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify(formData),
+//     })
+//       .then((response) => {
+//         if (!response.ok) {
+//           throw new Error('Erro ao enviar dados');
+//         }
+//         return response.json();
+//       })
+//       .then((data) => {
+//         console.log('Dados enviados com sucesso:', data);
+//         setShowFicha(true); // Exibe a aba "Ficha" após salvar
+//         toast({
+//           title: 'Sucesso',
+//           description: 'Indicador cadastrado com sucesso.',
+//           status: 'success',
+//           duration: 5000,
+//           isClosable: true,
+//         });
+//       })
+//       .catch((error) => {
+//         console.error('Erro:', error);
+//         toast({
+//           title: 'Erro',
+//           description: 'Não foi possível cadastrar o indicador.',
+//           status: 'error',
+//           duration: 5000,
+//           isClosable: true,
+//         });
+//       });
 //   };
 
 //   const renderGeneralTab = () => (
@@ -728,3 +756,4 @@ export default AdminPage;
 // };
 
 // export default AdminPage;
+
