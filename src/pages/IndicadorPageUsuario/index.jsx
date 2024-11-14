@@ -3,8 +3,6 @@ import {
   ChakraProvider,
   Box,
   Heading,
-  Text,
-  Input,
   Select,
   Table,
   Thead,
@@ -12,12 +10,24 @@ import {
   Tr,
   Th,
   Td,
+  Input,
   Textarea,
   Tooltip,
   Button,
-  useToast, // Importação do useToast
+  useToast,
+  Text,
+  IconButton,
+  VStack,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Stack,
 } from '@chakra-ui/react';
-import { InfoIcon } from '@chakra-ui/icons';
+import { InfoIcon, EditIcon, CheckIcon, ViewIcon } from '@chakra-ui/icons';
 
 const App = () => {
   const [selectedIndicator, setSelectedIndicator] = useState('');
@@ -26,43 +36,64 @@ const App = () => {
   const [formData, setFormData] = useState({
     prescrito: Array(12).fill(''),
     finalizado: Array(12).fill(''),
+    analiseMensal: Array(12).fill(''),
   });
+  const [indicators, setIndicators] = useState([]);
+  const [editingMonths, setEditingMonths] = useState(Array(12).fill(false));
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const toast = useToast();
 
-  const indicators = [
-    'Indicador 1 - Prescrição de Processos',
-    'Indicador 2 - Monitoramento de Atividades',
-    'Indicador 3 - Controle de Qualidade',
-  ];
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-  // Hook do Chakra UI para exibir toasts
-  const toast = useToast();
+  // Obter o mês atual (0 = Janeiro, 1 = Fevereiro, ..., 11 = Dezembro)
+  const currentMonth = new Date().getMonth();
 
-  // Carrega os dados salvos no localStorage ao montar o componente
+  useEffect(() => {
+    fetch('http://localhost:8000/indicadores/')
+      .then(response => response.json())
+      .then(data => setIndicators(data))
+      .catch(error => {
+        console.error('Erro ao carregar indicadores:', error);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível carregar os indicadores.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      });
+  }, [toast]);
+
   useEffect(() => {
     const savedData = localStorage.getItem('formData');
     if (savedData) {
       const parsedData = JSON.parse(savedData);
+
+      const updatedFormData = {
+        prescrito: parsedData.formData?.prescrito || Array(12).fill(''),
+        finalizado: parsedData.formData?.finalizado || Array(12).fill(''),
+        analiseMensal: parsedData.formData?.analiseMensal || Array(12).fill(''),
+      };
+
       setSelectedIndicator(parsedData.selectedIndicator || '');
       setMeta(parsedData.meta || '0%');
       setAnalysis(parsedData.analysis || '');
-      setFormData(parsedData.formData || {
-        prescrito: Array(12).fill(''),
-        finalizado: Array(12).fill(''),
-      });
+      setFormData(updatedFormData);
+      setEditingMonths(Array(12).fill(false));
     }
   }, []);
 
   const handleInputChange = (type, index, value) => {
     setFormData((prev) => {
       const updated = { ...prev };
+      updated[type] = [...updated[type]];
       updated[type][index] = value;
       return updated;
     });
   };
 
-  // Cálculo do Valor Calculado
   const valorCalculado = formData.prescrito.map((value, index) => {
     const prescrito = Number(value);
     const finalizado = Number(formData.finalizado[index]);
@@ -70,7 +101,6 @@ const App = () => {
     return isNaN(calc) || !isFinite(calc) ? 0 : calc;
   });
 
-  // Função para salvar os dados no localStorage e exibir o toast
   const handleSave = () => {
     const dataToSave = {
       selectedIndicator,
@@ -88,10 +118,24 @@ const App = () => {
     });
   };
 
+  const toggleEditingMonth = (index) => {
+    setEditingMonths((prev) => {
+      const updated = [...prev];
+      updated[index] = !updated[index];
+      return updated;
+    });
+  };
+
+  // Função para abrir o modal e definir o mês selecionado
+  const openAnalysisModal = (index) => {
+    setSelectedMonth(index); // Define o mês selecionado
+    onOpen();
+  };
+
   const TableRow = ({ label, type }) => (
     <Tr>
       {type === 'prescrito' && (
-        <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+        <Td rowSpan="4" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
           <Text fontWeight="bold">
             {selectedIndicator || 'Selecione um Indicador'}
           </Text>
@@ -107,7 +151,46 @@ const App = () => {
       </Td>
       {months.map((month, index) => (
         <Td key={`${type}-${index}`} textAlign="center" p="1" border="1px solid" borderColor="gray.300">
-          {type !== 'calculado' ? (
+          {type === 'calculado' ? (
+            <Text>{valorCalculado[index].toFixed(2)}%</Text>
+          ) : type === 'analise' ? (
+            <VStack spacing={1}>
+              {editingMonths[index] ? (
+                <>
+                  <Textarea
+                    key={`textarea-${index}`}
+                    size="xs"
+                    value={formData.analiseMensal[index]}
+                    onChange={(e) => handleInputChange('analiseMensal', index, e.target.value)}
+                    autoFocus
+                  />
+                  <IconButton
+                    size="xs"
+                    icon={<CheckIcon />}
+                    aria-label="Salvar Análise"
+                    onClick={() => toggleEditingMonth(index)}
+                  />
+                </>
+              ) : (
+                <Stack spacing={1} isInline>
+                  <IconButton
+                    size="xs"
+                    icon={<EditIcon />}
+                    aria-label="Editar Análise"
+                    onClick={() => toggleEditingMonth(index)}
+                    isDisabled={index > currentMonth} // Desabilitar ícone de edição para meses futuros
+                  />
+                  <IconButton
+                    size="xs"
+                    icon={<ViewIcon />}
+                    aria-label="Ver Análise Crítica"
+                    onClick={() => openAnalysisModal(index)}
+                    isDisabled={index > currentMonth} // Desabilitar ícone de visualização para meses futuros
+                  />
+                </Stack>
+              )}
+            </VStack>
+          ) : (
             <Input
               size="sm"
               variant="outline"
@@ -115,31 +198,20 @@ const App = () => {
               value={formData[type][index]}
               onChange={(e) => handleInputChange(type, index, e.target.value)}
               placeholder="-"
+              isDisabled={index > currentMonth} // Desabilitar input para meses futuros
             />
-          ) : (
-            <Text>{valorCalculado[index].toFixed(2)}%</Text>
           )}
         </Td>
       ))}
       {type === 'prescrito' && (
         <>
-          <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+          <Td rowSpan="4" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
             <Input
               size="sm"
               variant="outline"
               textAlign="center"
               value={meta}
               onChange={(e) => setMeta(e.target.value)}
-            />
-          </Td>
-          <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
-            <Textarea
-              size="sm"
-              variant="outline"
-              resize="vertical"
-              placeholder=""
-              value={analysis}
-              onChange={(e) => setAnalysis(e.target.value)}
             />
           </Td>
         </>
@@ -166,9 +238,9 @@ const App = () => {
             _hover={{ borderColor: 'gray.600' }}
             _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px gray.600' }}
           >
-            {indicators.map((indicator, index) => (
-              <option key={index} value={indicator}>
-                {indicator}
+            {indicators.map((indicator) => (
+              <option key={indicator.id} value={indicator.nomeIndicador}>
+                {indicator.nomeIndicador}
               </option>
             ))}
           </Select>
@@ -195,31 +267,265 @@ const App = () => {
                 <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
                   Meta 2024
                 </Th>
-                <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
-                  Análise Crítica
-                </Th>
               </Tr>
             </Thead>
             <Tbody>
               <TableRow label="Número de Processos Administrativos Disciplinares prescritos" type="prescrito" />
               <TableRow label="Número de Processos Administrativos Disciplinares finalizados no período" type="finalizado" />
               <TableRow label="Valor Calculado" type="calculado" />
+              <TableRow label="Análise Mensal" type="analise" />
             </Tbody>
           </Table>
         </Box>
 
-        {/* Botão de Salvar */}
         <Box textAlign="center" mt="4">
           <Button colorScheme="teal" onClick={handleSave}>
             Salvar Dados
           </Button>
         </Box>
+
+        {/* Modal para exibir a Análise Crítica do mês selecionado */}
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Análise Crítica - {selectedMonth !== null ? months[selectedMonth] : ''}</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Text>{selectedMonth !== null ? formData.analiseMensal[selectedMonth] : ''}</Text>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </Box>
     </ChakraProvider>
   );
 };
 
 export default App;
+
+
+
+// import React, { useState, useEffect } from 'react';
+// import {
+//   ChakraProvider,
+//   Box,
+//   Heading,
+//   Text,
+//   Input,
+//   Select,
+//   Table,
+//   Thead,
+//   Tbody,
+//   Tr,
+//   Th,
+//   Td,
+//   Textarea,
+//   Tooltip,
+//   Button,
+//   useToast, // Importação do useToast
+// } from '@chakra-ui/react';
+// import { InfoIcon } from '@chakra-ui/icons';
+
+// const App = () => {
+//   const [selectedIndicator, setSelectedIndicator] = useState('');
+//   const [meta, setMeta] = useState('0%');
+//   const [analysis, setAnalysis] = useState('');
+//   const [formData, setFormData] = useState({
+//     prescrito: Array(12).fill(''),
+//     finalizado: Array(12).fill(''),
+//   });
+
+//   const indicators = [
+//     'Indicador 1 - Prescrição de Processos',
+//     'Indicador 2 - Monitoramento de Atividades',
+//     'Indicador 3 - Controle de Qualidade',
+//   ];
+
+//   const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+//   // Hook do Chakra UI para exibir toasts
+//   const toast = useToast();
+
+//   // Carrega os dados salvos no localStorage ao montar o componente
+//   useEffect(() => {
+//     const savedData = localStorage.getItem('formData');
+//     if (savedData) {
+//       const parsedData = JSON.parse(savedData);
+//       setSelectedIndicator(parsedData.selectedIndicator || '');
+//       setMeta(parsedData.meta || '0%');
+//       setAnalysis(parsedData.analysis || '');
+//       setFormData(parsedData.formData || {
+//         prescrito: Array(12).fill(''),
+//         finalizado: Array(12).fill(''),
+//       });
+//     }
+//   }, []);
+
+//   const handleInputChange = (type, index, value) => {
+//     setFormData((prev) => {
+//       const updated = { ...prev };
+//       updated[type][index] = value;
+//       return updated;
+//     });
+//   };
+
+//   // Cálculo do Valor Calculado
+//   const valorCalculado = formData.prescrito.map((value, index) => {
+//     const prescrito = Number(value);
+//     const finalizado = Number(formData.finalizado[index]);
+//     const calc = (finalizado / prescrito) * 100;
+//     return isNaN(calc) || !isFinite(calc) ? 0 : calc;
+//   });
+
+//   // Função para salvar os dados no localStorage e exibir o toast
+//   const handleSave = () => {
+//     const dataToSave = {
+//       selectedIndicator,
+//       meta,
+//       analysis,
+//       formData,
+//     };
+//     localStorage.setItem('formData', JSON.stringify(dataToSave));
+//     toast({
+//       title: 'Dados salvos com sucesso!',
+//       description: 'Suas informações foram armazenadas.',
+//       status: 'success',
+//       duration: 3000,
+//       isClosable: true,
+//     });
+//   };
+
+//   const TableRow = ({ label, type }) => (
+//     <Tr>
+//       {type === 'prescrito' && (
+//         <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//           <Text fontWeight="bold">
+//             {selectedIndicator || 'Selecione um Indicador'}
+//           </Text>
+//         </Td>
+//       )}
+//       <Td p="1" textAlign="left" border="1px solid" borderColor="gray.300">
+//         <Tooltip label={`Informações sobre ${label}`} aria-label="Tooltip">
+//           <Text>
+//             <InfoIcon mr="2" />
+//             {label}
+//           </Text>
+//         </Tooltip>
+//       </Td>
+//       {months.map((month, index) => (
+//         <Td key={`${type}-${index}`} textAlign="center" p="1" border="1px solid" borderColor="gray.300">
+//           {type !== 'calculado' ? (
+//             <Input
+//               size="sm"
+//               variant="outline"
+//               textAlign="center"
+//               value={formData[type][index]}
+//               onChange={(e) => handleInputChange(type, index, e.target.value)}
+//               placeholder="-"
+//             />
+//           ) : (
+//             <Text>{valorCalculado[index].toFixed(2)}%</Text>
+//           )}
+//         </Td>
+//       ))}
+//       {type === 'prescrito' && (
+//         <>
+//           <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//             <Input
+//               size="sm"
+//               variant="outline"
+//               textAlign="center"
+//               value={meta}
+//               onChange={(e) => setMeta(e.target.value)}
+//             />
+//           </Td>
+//           <Td rowSpan="3" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//             <Textarea
+//               size="sm"
+//               variant="outline"
+//               resize="vertical"
+//               placeholder=""
+//               value={analysis}
+//               onChange={(e) => setAnalysis(e.target.value)}
+//             />
+//           </Td>
+//         </>
+//       )}
+//     </Tr>
+//   );
+
+//   return (
+//     <ChakraProvider>
+//       <Box padding="4" maxW="100%" margin="auto">
+//         <Box mb="4" textAlign="center">
+//           <Heading as="h2" size="md" mb="4">
+//             Selecione o Indicador
+//           </Heading>
+//           <Select
+//             placeholder="Escolha um indicador"
+//             value={selectedIndicator}
+//             onChange={(e) => setSelectedIndicator(e.target.value)}
+//             size="md"
+//             variant="outline"
+//             maxW="300px"
+//             margin="auto"
+//             borderColor="gray.500"
+//             _hover={{ borderColor: 'gray.600' }}
+//             _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px gray.600' }}
+//           >
+//             {indicators.map((indicator, index) => (
+//               <option key={index} value={indicator}>
+//                 {indicator}
+//               </option>
+//             ))}
+//           </Select>
+//         </Box>
+
+//         <Box overflowX="auto">
+//           <Heading as="h3" size="sm" mb="4" textAlign="center">
+//             Prescrição de Processos Administrativos Disciplinares (PAD)
+//           </Heading>
+//           <Table variant="simple" size="sm" colorScheme="gray">
+//             <Thead>
+//               <Tr>
+//                 <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//                   Indicador
+//                 </Th>
+//                 <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//                   Valores
+//                 </Th>
+//                 {months.map((month) => (
+//                   <Th key={month} textAlign="center" p="1" border="1px solid" borderColor="gray.300">
+//                     {month}
+//                   </Th>
+//                 ))}
+//                 <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//                   Meta 2024
+//                 </Th>
+//                 <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+//                   Análise Crítica
+//                 </Th>
+//               </Tr>
+//             </Thead>
+//             <Tbody>
+//               <TableRow label="Número de Processos Administrativos Disciplinares prescritos" type="prescrito" />
+//               <TableRow label="Número de Processos Administrativos Disciplinares finalizados no período" type="finalizado" />
+//               <TableRow label="Valor Calculado" type="calculado" />
+//             </Tbody>
+//           </Table>
+//         </Box>
+
+//         {/* Botão de Salvar */}
+//         <Box textAlign="center" mt="4">
+//           <Button colorScheme="teal" onClick={handleSave}>
+//             Salvar Dados
+//           </Button>
+//         </Box>
+//       </Box>
+//     </ChakraProvider>
+//   );
+// };
+
+// export default App;
 
 
 
