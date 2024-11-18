@@ -51,9 +51,6 @@ const AdminPage = () => {
     unidadeMedida: '',
   });
 
-  // Estado para controlar a exibição da aba "Ficha"
-  const [showFicha, setShowFicha] = useState(false);
-
   // Função para lidar com mudanças nos campos de entrada
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,7 +86,6 @@ const AdminPage = () => {
 
       const data = await response.json();
       console.log('Dados enviados com sucesso:', data);
-      setShowFicha(true); // Exibe a aba "Ficha" após salvar
       toast({
         title: 'Sucesso',
         description: 'Indicador cadastrado com sucesso.',
@@ -328,44 +324,15 @@ const AdminPage = () => {
     </VStack>
   );
 
-  const renderFichaTab = () => (
-    <VStack spacing={4} align="stretch">
-      <Heading as="h2" size="lg">
-        Ficha do Indicador
-      </Heading>
-      <p><strong>Código do Indicador:</strong> {formData.codigoIndicador}</p>
-      <p><strong>Nome do Indicador:</strong> {formData.nomeIndicador}</p>
-      <p><strong>Objetivo Estratégico:</strong> {formData.objetivoEstrategico}</p>
-      <p><strong>Perspectiva Estratégica:</strong> {formData.perspectivaEstrategica}</p>
-      <p><strong>Descrição do Objetivo Estratégico:</strong> {formData.descricaoObjetivoEstrategico}</p>
-      <p><strong>Descrição do Indicador:</strong> {formData.descricaoIndicador}</p>
-      <p><strong>Finalidade do Indicador:</strong> {formData.finalidadeIndicador}</p>
-      <p><strong>Dimensão do Desempenho:</strong> {formData.dimensaoDesempenho}</p>
-      <p><strong>Fórmula:</strong> {formData.formula}</p>
-      <p><strong>Fonte/Forma de Coleta:</strong> {formData.fonteFormaColeta}</p>
-      <p><strong>Peso do Indicador:</strong> {formData.pesoIndicador}</p>
-      <p><strong>Interpretação/Recomendações:</strong> {formData.interpretacaoIndicador}</p>
-      <p><strong>Área Responsável:</strong> {formData.areaResponsavel}</p>
-      <p><strong>Meta:</strong> {formData.meta}</p>
-      <p><strong>Tipos de Acumulação:</strong> {formData.tiposAcumulacao}</p>
-      <p><strong>Polaridade:</strong> {formData.polaridade}</p>
-      <p><strong>Periodicidade de Coleta:</strong> {formData.periodicidadeColeta}</p>
-      <p><strong>Frequência da Meta:</strong> {formData.frequenciaMeta}</p>
-      <p><strong>Unidade de Medida:</strong> {formData.unidadeMedida}</p>
-    </VStack>
-  );
-
   return (
     <Header>
       <Box p={4}>
         <Tabs variant="enclosed">
           <TabList>
             <Tab>Geral</Tab>
-            {showFicha && <Tab>Ficha</Tab>}
           </TabList>
           <TabPanels>
             <TabPanel>{renderGeneralTab()}</TabPanel>
-            {showFicha && <TabPanel>{renderFichaTab()}</TabPanel>}
           </TabPanels>
         </Tabs>
       </Box>
