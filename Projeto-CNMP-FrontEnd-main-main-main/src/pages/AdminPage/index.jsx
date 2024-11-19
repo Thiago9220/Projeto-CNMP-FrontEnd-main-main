@@ -277,7 +277,7 @@ const AdminPage = () => {
             name="valor"
             value={component.valor}
             onChange={(e) => handleComponentChange(index, e)}
-            placeholder={`Digite o valor do componente ${index + 1}`}
+            placeholder={`Descreva o componente ${index + 1}`}
           />
         </FormGroup>
       ))}
