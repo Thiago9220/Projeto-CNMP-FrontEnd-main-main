@@ -1,0 +1,41 @@
+.indicatorsPage {
+  padding: 20px;
+}
+
+
+.button {
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.table th {
+  background-color: #f2f2f2;
+  text-align: left;
+}
+
+.tableInput {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.actionButton {
+  padding: 5px 10px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+

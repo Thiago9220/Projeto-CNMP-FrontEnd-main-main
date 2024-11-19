@@ -1,0 +1,97 @@
+/* General Styles */
+.homepage-container {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(to right, #ece9e6, #ffffff);
+}
+
+/* Header Styles */
+.header {
+  background-color: #3f51b5;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Content Styles */
+.main {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: url('https://source.unsplash.com/random/1600x900') no-repeat center center;
+  background-size: cover;
+}
+
+.hero {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.hero h2 {
+  color: #333;
+  font-size: 2.5rem;
+}
+
+.hero p {
+  color: #555;
+  font-size: 1.2rem;
+}
+
+/* Button Styles */
+.cta {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.login-btn, .register-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.login-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.register-btn {
+  background-color: #ba5400;
+  color: white;
+}
+
+.register-btn:hover {
+  background-color: #e96e0a;
+  transform: translateY(-2px);
+}
+
+/* Footer Styles */
+.footer {
+  background-color: #3f51b5;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+}
+
+  
