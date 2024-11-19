@@ -15,8 +15,23 @@ import {
   VStack,
   Heading,
   useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  SimpleGrid,
 } from '@chakra-ui/react';
 import Header from '../../components/Header';
+
+// Importar o MathQuill e o CSS correto
+import 'mathquill/build/mathquill.css';
+import { addStyles, EditableMathField } from 'react-mathquill';
+
+// Adicionar estilos do MathQuill
+addStyles();
 
 const FormGroup = ({ label, children }) => (
   <FormControl isRequired>
@@ -51,10 +66,40 @@ const AdminPage = () => {
     unidadeMedida: '',
   });
 
+  // Estado para controlar o modal da fórmula
+  const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
+
+  // Estado para a fórmula em LaTeX
+  const [latexFormula, setLatexFormula] = useState('');
+
+  // Referência ao MathField
+  const [mathField, setMathField] = useState(null);
+
+  // Função para abrir o modal da fórmula
+  const openFormulaModal = () => setIsFormulaModalOpen(true);
+
+  // Função para fechar o modal da fórmula
+  const closeFormulaModal = () => setIsFormulaModalOpen(false);
+
+  // Função para salvar a fórmula
+  const saveFormula = () => {
+    setFormData({ ...formData, formula: latexFormula });
+    closeFormulaModal();
+  };
+
   // Função para lidar com mudanças nos campos de entrada
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  // Função para inserir símbolos no MathField
+  const insertSymbol = (symbol) => {
+    if (mathField) {
+      mathField.write(symbol);
+      mathField.focus();
+      setLatexFormula(mathField.latex());
+    }
   };
 
   // Função para validar e enviar os dados para o backend
@@ -192,15 +237,72 @@ const AdminPage = () => {
         </Select>
       </FormGroup>
 
+      {/* Campo de Fórmula com modal */}
       <FormGroup label="Fórmula">
         <Input
           type="text"
           name="formula"
           value={formData.formula}
-          onChange={handleChange}
-          placeholder="Digite a fórmula do indicador"
+          onClick={openFormulaModal}
+          placeholder="Clique para inserir a fórmula"
+          readOnly
         />
       </FormGroup>
+
+      {/* Modal para inserir a fórmula */}
+      <Modal isOpen={isFormulaModalOpen} onClose={closeFormulaModal} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Inserir Fórmula</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl>
+              {/* Botões para inserir símbolos */}
+              <SimpleGrid columns={[4, 6]} spacing={2} mb={3}>
+                {[
+                  { symbol: '+', label: '+' },
+                  { symbol: '-', label: '-' },
+                  { symbol: '*', label: '×' },
+                  { symbol: '/', label: '÷' },
+                  { symbol: '^', label: '^' },
+                  { symbol: '(', label: '(' },
+                  { symbol: ')', label: ')' },
+                  { symbol: '\\sqrt{}', label: '√' },
+                  { symbol: '\\frac{}{}', label: 'Fraç' },
+                  { symbol: 'x', label: 'x' },
+                  { symbol: 'y', label: 'y' },
+                  { symbol: 'z', label: 'z' },
+                  // Adicione mais símbolos conforme necessário
+                ].map((item, index) => (
+                  <Button key={index} onClick={() => insertSymbol(item.symbol)}>
+                    {item.label}
+                  </Button>
+                ))}
+              </SimpleGrid>
+
+              <EditableMathField
+                latex={latexFormula}
+                onChange={(mathField) => {
+                  setLatexFormula(mathField.latex());
+                }}
+                mathquillDidMount={(mathFieldRef) => {
+                  setMathField(mathFieldRef);
+                }}
+                style={{ minHeight: '50px', fontSize: '1.4em', border: '1px solid #ccc', padding: '100px' }}
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={saveFormula}>
+              Salvar
+            </Button>
+            <Button variant="ghost" onClick={closeFormulaModal}>
+              Cancelar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <FormControl>
         <FormLabel>Fonte/Forma de Coleta dos Dados</FormLabel>
         <Textarea
@@ -341,6 +443,7 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
 
 
 // import React, { useState } from 'react';
