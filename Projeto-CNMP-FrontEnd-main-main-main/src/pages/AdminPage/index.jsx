@@ -64,6 +64,8 @@ const AdminPage = () => {
     periodicidadeColeta: '',
     frequenciaMeta: '',
     unidadeMedida: '',
+    numeroComponentes: '',
+    componentes: [],
   });
 
   // Estado para controlar o modal da fórmula
@@ -90,7 +92,23 @@ const AdminPage = () => {
   // Função para lidar com mudanças nos campos de entrada
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    // Se o campo é 'numeroComponentes', atualiza o número de componentes e reseta os valores anteriores
+    if (name === 'numeroComponentes') {
+      const numComponents = parseInt(value, 10) || 0;
+      const newComponents = Array(numComponents).fill({ valor: '' });
+      setFormData({ ...formData, [name]: value, componentes: newComponents });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  // Função para lidar com mudanças nos valores dos componentes
+  const handleComponentChange = (index, e) => {
+    const { name, value } = e.target;
+    const newComponents = [...formData.componentes];
+    newComponents[index] = { ...newComponents[index], [name]: value };
+    setFormData({ ...formData, componentes: newComponents });
   };
 
   // Função para inserir símbolos no MathField
@@ -237,6 +255,33 @@ const AdminPage = () => {
         </Select>
       </FormGroup>
 
+      {/* COMPONENTES */}
+      <FormGroup label="Número de componentes">
+        <Select
+          name="numeroComponentes"
+          value={formData.numeroComponentes}
+          onChange={handleChange}
+          placeholder="Selecione o número de componentes"
+        >
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </Select>
+      </FormGroup>
+
+      {/* Campos para os valores dos componentes */}
+      {formData.componentes.map((component, index) => (
+        <FormGroup key={index} label={`Valor do Componente ${index + 1}`}>
+          <Input
+            type="text"
+            name="valor"
+            value={component.valor}
+            onChange={(e) => handleComponentChange(index, e)}
+            placeholder={`Digite o valor do componente ${index + 1}`}
+          />
+        </FormGroup>
+      ))}
+
       {/* Campo de Fórmula com modal */}
       <FormGroup label="Fórmula">
         <Input
@@ -288,7 +333,12 @@ const AdminPage = () => {
                 mathquillDidMount={(mathFieldRef) => {
                   setMathField(mathFieldRef);
                 }}
-                style={{ minHeight: '50px', fontSize: '1.4em', border: '1px solid #ccc', padding: '100px' }}
+                style={{
+                  minHeight: '50px',
+                  fontSize: '1.4em',
+                  border: '1px solid #ccc',
+                  padding: '10px',
+                }}
               />
             </FormControl>
           </ModalBody>
@@ -463,14 +513,29 @@ export default AdminPage;
 //   VStack,
 //   Heading,
 //   useToast,
+//   Modal,
+//   ModalOverlay,
+//   ModalContent,
+//   ModalHeader,
+//   ModalFooter,
+//   ModalBody,
+//   ModalCloseButton,
+//   SimpleGrid,
 // } from '@chakra-ui/react';
 // import Header from '../../components/Header';
+
+// // Importar o MathQuill e o CSS correto
+// import 'mathquill/build/mathquill.css';
+// import { addStyles, EditableMathField } from 'react-mathquill';
+
+// // Adicionar estilos do MathQuill
+// addStyles();
 
 // const FormGroup = ({ label, children }) => (
 //   <FormControl isRequired>
 //     <FormLabel>{label}</FormLabel>
 //     {children}
-//   </FormControl> 
+//   </FormControl>
 // );
 
 // const AdminPage = () => {
@@ -499,8 +564,26 @@ export default AdminPage;
 //     unidadeMedida: '',
 //   });
 
-//   // Estado para controlar a exibição da aba "Ficha"
-//   const [showFicha, setShowFicha] = useState(false);
+//   // Estado para controlar o modal da fórmula
+//   const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
+
+//   // Estado para a fórmula em LaTeX
+//   const [latexFormula, setLatexFormula] = useState('');
+
+//   // Referência ao MathField
+//   const [mathField, setMathField] = useState(null);
+
+//   // Função para abrir o modal da fórmula
+//   const openFormulaModal = () => setIsFormulaModalOpen(true);
+
+//   // Função para fechar o modal da fórmula
+//   const closeFormulaModal = () => setIsFormulaModalOpen(false);
+
+//   // Função para salvar a fórmula
+//   const saveFormula = () => {
+//     setFormData({ ...formData, formula: latexFormula });
+//     closeFormulaModal();
+//   };
 
 //   // Função para lidar com mudanças nos campos de entrada
 //   const handleChange = (e) => {
@@ -508,8 +591,17 @@ export default AdminPage;
 //     setFormData({ ...formData, [name]: value });
 //   };
 
+//   // Função para inserir símbolos no MathField
+//   const insertSymbol = (symbol) => {
+//     if (mathField) {
+//       mathField.write(symbol);
+//       mathField.focus();
+//       setLatexFormula(mathField.latex());
+//     }
+//   };
+
 //   // Função para validar e enviar os dados para o backend
-//   const handleSave = () => {
+//   const handleSave = async () => {
 //     if (!formData.codigoIndicador || !formData.nomeIndicador) {
 //       toast({
 //         title: 'Erro',
@@ -521,41 +613,39 @@ export default AdminPage;
 //       return;
 //     }
 
-//     // Enviando os dados para o backend
-//     fetch('http://localhost:8000/indicadores/', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify(formData),
-//     })
-//       .then((response) => {
-//         if (!response.ok) {
-//           throw new Error('Erro ao enviar dados');
-//         }
-//         return response.json();
-//       })
-//       .then((data) => {
-//         console.log('Dados enviados com sucesso:', data);
-//         setShowFicha(true); // Exibe a aba "Ficha" após salvar
-//         toast({
-//           title: 'Sucesso',
-//           description: 'Indicador cadastrado com sucesso.',
-//           status: 'success',
-//           duration: 5000,
-//           isClosable: true,
-//         });
-//       })
-//       .catch((error) => {
-//         console.error('Erro:', error);
-//         toast({
-//           title: 'Erro',
-//           description: 'Não foi possível cadastrar o indicador.',
-//           status: 'error',
-//           duration: 5000,
-//           isClosable: true,
-//         });
+//     try {
+//       const response = await fetch('http://localhost:8000/indicadores/', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify(formData),
 //       });
+
+//       if (!response.ok) {
+//         const errorData = await response.json();
+//         throw new Error(errorData.detail || 'Erro ao enviar dados');
+//       }
+
+//       const data = await response.json();
+//       console.log('Dados enviados com sucesso:', data);
+//       toast({
+//         title: 'Sucesso',
+//         description: 'Indicador cadastrado com sucesso.',
+//         status: 'success',
+//         duration: 5000,
+//         isClosable: true,
+//       });
+//     } catch (error) {
+//       console.error('Erro:', error);
+//       toast({
+//         title: 'Erro',
+//         description: error.message || 'Não foi possível cadastrar o indicador.',
+//         status: 'error',
+//         duration: 5000,
+//         isClosable: true,
+//       });
+//     }
 //   };
 
 //   const renderGeneralTab = () => (
@@ -645,23 +735,81 @@ export default AdminPage;
 //         </Select>
 //       </FormGroup>
 
+//       {/* Campo de Fórmula com modal */}
 //       <FormGroup label="Fórmula">
 //         <Input
 //           type="text"
 //           name="formula"
 //           value={formData.formula}
-//           onChange={handleChange}
-//           placeholder="Digite a fórmula do indicador"
+//           onClick={openFormulaModal}
+//           placeholder="Clique para inserir a fórmula"
+//           readOnly
 //         />
 //       </FormGroup>
-//       <FormGroup label="Fonte/Forma de Coleta dos Dados">
+
+//       {/* Modal para inserir a fórmula */}
+//       <Modal isOpen={isFormulaModalOpen} onClose={closeFormulaModal} size="xl">
+//         <ModalOverlay />
+//         <ModalContent>
+//           <ModalHeader>Inserir Fórmula</ModalHeader>
+//           <ModalCloseButton />
+//           <ModalBody>
+//             <FormControl>
+//               {/* Botões para inserir símbolos */}
+//               <SimpleGrid columns={[4, 6]} spacing={2} mb={3}>
+//                 {[
+//                   { symbol: '+', label: '+' },
+//                   { symbol: '-', label: '-' },
+//                   { symbol: '*', label: '×' },
+//                   { symbol: '/', label: '÷' },
+//                   { symbol: '^', label: '^' },
+//                   { symbol: '(', label: '(' },
+//                   { symbol: ')', label: ')' },
+//                   { symbol: '\\sqrt{}', label: '√' },
+//                   { symbol: '\\frac{}{}', label: 'Fraç' },
+//                   { symbol: 'x', label: 'x' },
+//                   { symbol: 'y', label: 'y' },
+//                   { symbol: 'z', label: 'z' },
+//                   // Adicione mais símbolos conforme necessário
+//                 ].map((item, index) => (
+//                   <Button key={index} onClick={() => insertSymbol(item.symbol)}>
+//                     {item.label}
+//                   </Button>
+//                 ))}
+//               </SimpleGrid>
+
+//               <EditableMathField
+//                 latex={latexFormula}
+//                 onChange={(mathField) => {
+//                   setLatexFormula(mathField.latex());
+//                 }}
+//                 mathquillDidMount={(mathFieldRef) => {
+//                   setMathField(mathFieldRef);
+//                 }}
+//                 style={{ minHeight: '50px', fontSize: '1.4em', border: '1px solid #ccc', padding: '100px' }}
+//               />
+//             </FormControl>
+//           </ModalBody>
+//           <ModalFooter>
+//             <Button colorScheme="blue" mr={3} onClick={saveFormula}>
+//               Salvar
+//             </Button>
+//             <Button variant="ghost" onClick={closeFormulaModal}>
+//               Cancelar
+//             </Button>
+//           </ModalFooter>
+//         </ModalContent>
+//       </Modal>
+
+//       <FormControl>
+//         <FormLabel>Fonte/Forma de Coleta dos Dados</FormLabel>
 //         <Textarea
 //           name="fonteFormaColeta"
 //           value={formData.fonteFormaColeta}
 //           onChange={handleChange}
 //           placeholder="Descreva a fonte e forma de coleta"
 //         />
-//       </FormGroup>
+//       </FormControl>
 //       <FormGroup label="Peso do Indicador">
 //         <Input
 //           type="number"
@@ -671,14 +819,15 @@ export default AdminPage;
 //           placeholder="Digite o peso do indicador"
 //         />
 //       </FormGroup>
-//       <FormGroup label="Interpretação do Indicador/Recomendações">
+//       <FormControl>
+//         <FormLabel>Interpretação do Indicador/Recomendações</FormLabel>
 //         <Textarea
 //           name="interpretacaoIndicador"
 //           value={formData.interpretacaoIndicador}
 //           onChange={handleChange}
 //           placeholder="Descreva a interpretação ou recomendações"
 //         />
-//       </FormGroup>
+//       </FormControl>
 //       <FormGroup label="Área Responsável">
 //         <Input
 //           type="text"
@@ -689,7 +838,6 @@ export default AdminPage;
 //         />
 //       </FormGroup>
 
-//       {/* DESEMPENHO */}
 //       <Heading as="h2" size="lg">
 //         Desempenho
 //       </Heading>
@@ -776,44 +924,15 @@ export default AdminPage;
 //     </VStack>
 //   );
 
-//   const renderFichaTab = () => (
-//     <VStack spacing={4} align="stretch">
-//       <Heading as="h2" size="lg">
-//         Ficha do Indicador
-//       </Heading>
-//       <p><strong>Código do Indicador:</strong> {formData.codigoIndicador}</p>
-//       <p><strong>Nome do Indicador:</strong> {formData.nomeIndicador}</p>
-//       <p><strong>Objetivo Estratégico:</strong> {formData.objetivoEstrategico}</p>
-//       <p><strong>Perspectiva Estratégica:</strong> {formData.perspectivaEstrategica}</p>
-//       <p><strong>Descrição do Objetivo Estratégico:</strong> {formData.descricaoObjetivoEstrategico}</p>
-//       <p><strong>Descrição do Indicador:</strong> {formData.descricaoIndicador}</p>
-//       <p><strong>Finalidade do Indicador:</strong> {formData.finalidadeIndicador}</p>
-//       <p><strong>Dimensão do Desempenho:</strong> {formData.dimensaoDesempenho}</p>
-//       <p><strong>Fórmula:</strong> {formData.formula}</p>
-//       <p><strong>Fonte/Forma de Coleta:</strong> {formData.fonteFormaColeta}</p>
-//       <p><strong>Peso do Indicador:</strong> {formData.pesoIndicador}</p>
-//       <p><strong>Interpretação/Recomendações:</strong> {formData.interpretacaoIndicador}</p>
-//       <p><strong>Área Responsável:</strong> {formData.areaResponsavel}</p>
-//       <p><strong>Meta:</strong> {formData.meta}</p>
-//       <p><strong>Tipos de Acumulação:</strong> {formData.tiposAcumulacao}</p>
-//       <p><strong>Polaridade:</strong> {formData.polaridade}</p>
-//       <p><strong>Periodicidade de Coleta:</strong> {formData.periodicidadeColeta}</p>
-//       <p><strong>Frequência da Meta:</strong> {formData.frequenciaMeta}</p>
-//       <p><strong>Unidade de Medida:</strong> {formData.unidadeMedida}</p>
-//     </VStack>
-//   );
-
 //   return (
 //     <Header>
 //       <Box p={4}>
 //         <Tabs variant="enclosed">
 //           <TabList>
 //             <Tab>Geral</Tab>
-//             {showFicha && <Tab>Ficha</Tab>}
 //           </TabList>
 //           <TabPanels>
 //             <TabPanel>{renderGeneralTab()}</TabPanel>
-//             {showFicha && <TabPanel>{renderFichaTab()}</TabPanel>}
 //           </TabPanels>
 //         </Tabs>
 //       </Box>
@@ -822,4 +941,3 @@ export default AdminPage;
 // };
 
 // export default AdminPage;
-
