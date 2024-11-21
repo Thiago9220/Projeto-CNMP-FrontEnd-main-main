@@ -43,12 +43,15 @@ const App = () => {
   const [indicators, setIndicators] = useState([]);
   const [editingMonths, setEditingMonths] = useState(Array(12).fill(false));
   const [selectedMonth, setSelectedMonth] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date()); // Estado para o calendário
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const toast = useToast();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  ];
 
   const currentMonth = new Date().getMonth();
 
@@ -88,12 +91,10 @@ const App = () => {
   }, []);
 
   const handleInputChange = (type, index, value) => {
-    setFormData((prev) => {
-      const updated = { ...prev };
-      updated[type] = [...updated[type]];
-      updated[type][index] = value;
-      return updated;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [type]: prev[type].map((item, i) => (i === index ? value : item)),
+    }));
   };
 
   const valorCalculado = formData.prescrito.map((value, index) => {
@@ -120,15 +121,23 @@ const App = () => {
     });
   };
 
-  const toggleEditingMonth = (index) => {
-    setEditingMonths((prev) => {
+  const toggleEditingMonth = index => {
+    setEditingMonths(prev => {
       const updated = [...prev];
       updated[index] = !updated[index];
       return updated;
     });
+
+    setTimeout(() => {
+      const textarea = document.querySelector(`#analise-${index}`);
+      if (textarea) {
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }, 0);
   };
 
-  const openAnalysisModal = (index) => {
+  const openAnalysisModal = index => {
     setSelectedMonth(index);
     onOpen();
   };
@@ -136,13 +145,24 @@ const App = () => {
   const TableRow = ({ label, type }) => (
     <Tr>
       {type === 'prescrito' && (
-        <Td rowSpan="4" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+        <Td
+          rowSpan="4"
+          p="1"
+          textAlign="center"
+          border="1px solid"
+          borderColor="gray.300"
+        >
           <Text fontWeight="bold">
             {selectedIndicator || 'Selecione um Indicador'}
           </Text>
         </Td>
       )}
-      <Td p="1" textAlign="left" border="1px solid" borderColor="gray.300">
+      <Td
+        p="1"
+        textAlign="left"
+        border="1px solid"
+        borderColor="gray.300"
+      >
         <Tooltip label={`Informações sobre ${label}`} aria-label="Tooltip">
           <Text>
             <InfoIcon mr="2" />
@@ -151,7 +171,15 @@ const App = () => {
         </Tooltip>
       </Td>
       {months.map((month, index) => (
-        <Td key={`${type}-${index}`} textAlign="center" p="1" border="1px solid" borderColor="gray.300">
+        <Td
+          key={`${type}-${index}`}
+          textAlign="center"
+          p="1"
+          border="1px solid"
+          borderColor="gray.300"
+          bgColor={index === currentMonth ? 'gray.200' : 'white'}
+          fontWeight={index === currentMonth ? 'medium' : 'normal'}
+        >
           {type === 'calculado' ? (
             <Text>{valorCalculado[index].toFixed(2)}%</Text>
           ) : type === 'analise' ? (
@@ -159,11 +187,28 @@ const App = () => {
               {editingMonths[index] ? (
                 <>
                   <Textarea
-                    key={`textarea-${index}`}
+                    id={`analise-${index}`}
                     size="xs"
-                    value={formData.analiseMensal[index]}
-                    onChange={(e) => handleInputChange('analiseMensal', index, e.target.value)}
-                    autoFocus
+                    value={formData.analiseMensal[index] || ''}
+                    onChange={e =>
+                      handleInputChange('analiseMensal', index, e.target.value)
+                    }
+                    isReadOnly={!editingMonths[index]}
+                    autoFocus={editingMonths[index]}
+                    onFocus={e => {
+                      const value = e.target.value;
+                      e.target.setSelectionRange(
+                        value.length,
+                        value.length
+                      );
+                    }}
+                    borderColor={
+                      editingMonths[index] ? 'blue.400' : 'gray.300'
+                    }
+                    _focus={{
+                      borderColor: 'blue.600',
+                      boxShadow: '0 0 0 1px blue.600',
+                    }}
                   />
                   <IconButton
                     size="xs"
@@ -179,14 +224,14 @@ const App = () => {
                     icon={<EditIcon />}
                     aria-label="Editar Análise"
                     onClick={() => toggleEditingMonth(index)}
-                    isDisabled={index > currentMonth}
+                    isDisabled={index >= currentMonth}
                   />
                   <IconButton
                     size="xs"
                     icon={<ViewIcon />}
                     aria-label="Ver Análise Crítica"
                     onClick={() => openAnalysisModal(index)}
-                    isDisabled={index > currentMonth}
+                    isDisabled={index >= currentMonth}
                   />
                 </Stack>
               )}
@@ -197,25 +242,31 @@ const App = () => {
               variant="outline"
               textAlign="center"
               value={formData[type][index]}
-              onChange={(e) => handleInputChange(type, index, e.target.value)}
+              onChange={e =>
+                handleInputChange(type, index, e.target.value)
+              }
               placeholder="-"
-              isDisabled={index > currentMonth}
+              isDisabled={index >= currentMonth}
             />
           )}
         </Td>
       ))}
       {type === 'prescrito' && (
-        <>
-          <Td rowSpan="4" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
-            <Input
-              size="sm"
-              variant="outline"
-              textAlign="center"
-              value={meta}
-              onChange={(e) => setMeta(e.target.value)}
-            />
-          </Td>
-        </>
+        <Td
+          rowSpan="4"
+          p="1"
+          textAlign="center"
+          border="1px solid"
+          borderColor="gray.300"
+        >
+          <Input
+            size="sm"
+            variant="outline"
+            textAlign="center"
+            value={meta}
+            onChange={e => setMeta(e.target.value)}
+          />
+        </Td>
       )}
     </Tr>
   );
@@ -227,13 +278,19 @@ const App = () => {
           <Box mb="4">
             <DatePicker
               selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
+              onChange={date => setSelectedDate(date)}
               showMonthYearPicker
               minDate={new Date(2024, 0, 1)}
               dateFormat="MM/yyyy"
               customInput={
-                <Button leftIcon={<CalendarIcon />} variant="outline">
-                  {selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                <Button
+                  leftIcon={<CalendarIcon />}
+                  variant="outline"
+                >
+                  {selectedDate.toLocaleDateString('pt-BR', {
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                 </Button>
               }
             />
@@ -241,17 +298,23 @@ const App = () => {
           <Select
             placeholder="Escolha um indicador"
             value={selectedIndicator}
-            onChange={(e) => setSelectedIndicator(e.target.value)}
+            onChange={e => setSelectedIndicator(e.target.value)}
             size="md"
             variant="outline"
             maxW="300px"
             margin="auto"
             borderColor="gray.500"
             _hover={{ borderColor: 'gray.600' }}
-            _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px gray.600' }}
+            _focus={{
+              borderColor: 'gray.600',
+              boxShadow: '0 0 0 1px gray.600',
+            }}
           >
-            {indicators.map((indicator) => (
-              <option key={indicator.id} value={indicator.nomeIndicador}>
+            {indicators.map(indicator => (
+              <option
+                key={indicator.id}
+                value={indicator.nomeIndicador}
+              >
                 {indicator.nomeIndicador}
               </option>
             ))}
@@ -259,31 +322,67 @@ const App = () => {
         </Box>
 
         <Box overflowX="auto">
-          <Heading as="h3" size="sm" mb="4" textAlign="center">
-            Prescrição de Processos Administrativos Disciplinares (PAD)
+          <Heading
+            as="h3"
+            size="sm"
+            mb="4"
+            textAlign="center"
+          >
+            Prescrição de Processos Administrativos Disciplinares
+            (PAD)
           </Heading>
           <Table variant="simple" size="sm" colorScheme="gray">
             <Thead>
               <Tr>
-                <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+                <Th
+                  rowSpan="2"
+                  p="1"
+                  textAlign="center"
+                  border="1px solid"
+                  borderColor="gray.300"
+                >
                   Indicador
                 </Th>
-                <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+                <Th
+                  rowSpan="2"
+                  p="1"
+                  textAlign="center"
+                  border="1px solid"
+                  borderColor="gray.300"
+                >
                   Valores
                 </Th>
-                {months.map((month) => (
-                  <Th key={month} textAlign="center" p="1" border="1px solid" borderColor="gray.300">
+                {months.map(month => (
+                  <Th
+                    key={month}
+                    textAlign="center"
+                    p="1"
+                    border="1px solid"
+                    borderColor="gray.300"
+                  >
                     {month}
                   </Th>
                 ))}
-                <Th rowSpan="2" p="1" textAlign="center" border="1px solid" borderColor="gray.300">
+                <Th
+                  rowSpan="2"
+                  p="1"
+                  textAlign="center"
+                  border="1px solid"
+                  borderColor="gray.300"
+                >
                   Meta 2024
                 </Th>
               </Tr>
             </Thead>
             <Tbody>
-              <TableRow label="Número de Processos Administrativos Disciplinares prescritos" type="prescrito" />
-              <TableRow label="Número de Processos Administrativos Disciplinares finalizados no período" type="finalizado" />
+              <TableRow
+                label="Número de Processos Administrativos Disciplinares prescritos"
+                type="prescrito"
+              />
+              <TableRow
+                label="Número de Processos Administrativos Disciplinares finalizados no período"
+                type="finalizado"
+              />
               <TableRow label="Valor Calculado" type="calculado" />
               <TableRow label="Análise Mensal" type="analise" />
             </Tbody>
@@ -291,7 +390,7 @@ const App = () => {
         </Box>
 
         <Box textAlign="center" mt="4">
-          <Button colorScheme="teal" onClick={handleSave}>
+          <Button bg="red.600" colorScheme="red" onClick={handleSave}>
             Salvar Dados
           </Button>
         </Box>
@@ -299,10 +398,19 @@ const App = () => {
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Análise Crítica - {selectedMonth !== null ? months[selectedMonth] : ''}</ModalHeader>
+            <ModalHeader>
+              Análise Crítica -{' '}
+              {selectedMonth !== null
+                ? months[selectedMonth]
+                : ''}
+            </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <Text>{selectedMonth !== null ? formData.analiseMensal[selectedMonth] : ''}</Text>
+              <Text>
+                {selectedMonth !== null
+                  ? formData.analiseMensal[selectedMonth]
+                  : ''}
+              </Text>
             </ModalBody>
           </ModalContent>
         </Modal>
