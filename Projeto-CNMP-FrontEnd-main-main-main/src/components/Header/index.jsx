@@ -456,10 +456,10 @@ const SidebarWithHeader = ({ children }) => {
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleSendHelpRequest}>
+            <Button size="sm" bg="red.600" colorScheme="red" mr={3} onClick={handleSendHelpRequest}>
               Enviar
             </Button>
-            <Button variant="ghost" onClick={onCloseHelpForm}>
+            <Button size="sm" variant="ghost" onClick={onCloseHelpForm}>
               Cancelar
             </Button>
           </ModalFooter>
