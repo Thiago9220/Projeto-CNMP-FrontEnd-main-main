@@ -341,7 +341,7 @@ const AdminPage = () => {
                 <Button size="sm" bg="red.600" colorScheme="red" onClick={() => saveComponentValue(index)}>
                   Salvar
                 </Button>
-                <Button size="sm" bg="red.300" onClick={() => cancelComponentEdit(index)}>Cancelar</Button>
+                <Button size="sm" bg="red.200" onClick={() => cancelComponentEdit(index)}>Cancelar</Button>
               </ButtonGroup>
             </>
           ) : (
@@ -416,10 +416,10 @@ const AdminPage = () => {
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={saveFormula}>
+            <Button size="sm" bg="red.600" colorScheme="red" mr={3} onClick={saveFormula}>
               Salvar
             </Button>
-            <Button variant="ghost" onClick={closeFormulaModal}>
+            <Button size="sm" bg="red.200" variant="ghost" onClick={closeFormulaModal}>
               Cancelar
             </Button>
           </ModalFooter>
