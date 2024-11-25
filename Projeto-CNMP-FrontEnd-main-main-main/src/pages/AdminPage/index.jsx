@@ -338,10 +338,10 @@ const AdminPage = () => {
                 placeholder={`Descreva o componente ${index + 1}`}
               />
               <ButtonGroup mt={2}>
-                <Button colorScheme="blue" onClick={() => saveComponentValue(index)}>
+                <Button size="sm" bg="red.600" colorScheme="red" onClick={() => saveComponentValue(index)}>
                   Salvar
                 </Button>
-                <Button onClick={() => cancelComponentEdit(index)}>Cancelar</Button>
+                <Button size="sm" bg="red.300" onClick={() => cancelComponentEdit(index)}>Cancelar</Button>
               </ButtonGroup>
             </>
           ) : (
