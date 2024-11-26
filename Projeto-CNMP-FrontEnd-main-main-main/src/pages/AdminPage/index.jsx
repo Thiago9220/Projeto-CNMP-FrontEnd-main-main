@@ -300,7 +300,7 @@ const AdminPage = () => {
 
       {/* Campos para os valores dos componentes */}
       {formData.componentes.map((component, index) => (
-        <FormGroup key={index} label={`Valor do Componente ${index + 1}`}>
+        <FormGroup key={index} label={`Componente ${index + 1}`}>
           {editingComponents[index] ? (
             <>
               <Input

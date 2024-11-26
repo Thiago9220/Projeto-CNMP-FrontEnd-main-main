@@ -1,6 +1,4 @@
-// src/components/FormulaEditor.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -21,6 +19,8 @@ import {
   VStack,
   Wrap,
   WrapItem,
+  useColorModeValue,
+  useToast,
 } from '@chakra-ui/react';
 
 // Importar o MathQuill, KaTeX e os estilos necessários
@@ -41,9 +41,8 @@ const FormulaEditor = ({
 }) => {
   // Estado para a fórmula em LaTeX
   const [latexFormula, setLatexFormula] = useState(initialFormula || '');
-
-  // Referência ao MathField
   const [mathField, setMathField] = useState(null);
+  const toast = useToast();
 
   // Arrays de símbolos organizados por categorias
   const operators = [
@@ -111,95 +110,140 @@ const FormulaEditor = ({
     }
   };
 
+  // Validação de entrada para fórmulas
+  const validateFormula = () => {
+    try {
+      katex.renderToString(latexFormula, { throwOnError: true });
+      return true;
+    } catch (error) {
+      toast({
+        title: 'Erro de Fórmula',
+        description: 'A fórmula contém erros. Por favor, corrija antes de salvar.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return false;
+    }
+  };
+
   // Função para salvar a fórmula
   const saveFormula = () => {
-    onSave(latexFormula);
-    onClose();
+    if (validateFormula()) {
+      onSave(latexFormula);
+      onClose();
+    }
   };
+
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (mathField) {
+        switch (event.key) {
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+          case '^':
+            mathField.write(event.key);
+            setLatexFormula(mathField.latex());
+            break;
+          case 'Enter':
+            event.preventDefault();
+            saveFormula();
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mathField, latexFormula]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent
+        bg={useColorModeValue('white', 'gray.800')}
+        color={useColorModeValue('black', 'white')}
+      >
         <ModalHeader>Inserir Fórmula</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <FormControl>
-          <ChakraTabs variant="enclosed" defaultIndex={0}>
-            <TabList>
+            <ChakraTabs variant="enclosed" defaultIndex={0}>
+              <TabList>
                 <Tab>Componentes</Tab>
                 <Tab>Operadores</Tab>
                 <Tab>Letras Gregas</Tab>
                 <Tab>Relações</Tab>
                 <Tab>Setas</Tab>
-            </TabList>
-            <TabPanels>
+              </TabList>
+              <TabPanels>
                 <TabPanel>
-                {/* Componentes */}
-                <VStack align="stretch" spacing={2}>
+                  <VStack align="stretch" spacing={2}>
                     {componentes.map((component, index) => (
-                    <Button
+                      <Button
                         key={index}
                         size="sm"
                         variant="outline"
                         onClick={() => insertSymbol(`Componente${index + 1}`)}
-                    >
+                      >
                         {`Componente ${index + 1}: ${component.valor || 'Sem Valor'}`}
-                    </Button>
+                      </Button>
                     ))}
-                </VStack>
+                  </VStack>
                 </TabPanel>
                 <TabPanel>
-                {/* Operadores */}
-                <Wrap spacing={2}>
+                  <Wrap spacing={2}>
                     {operators.map((item, index) => (
-                    <WrapItem key={index}>
+                      <WrapItem key={index}>
                         <Button onClick={() => insertSymbol(item.symbol)}>
-                        {item.label}
+                          {item.label}
                         </Button>
-                    </WrapItem>
+                      </WrapItem>
                     ))}
-                </Wrap>
+                  </Wrap>
                 </TabPanel>
                 <TabPanel>
-                {/* Letras Gregas */}
-                <Wrap spacing={2}>
+                  <Wrap spacing={2}>
                     {greekLetters.map((item, index) => (
-                    <WrapItem key={index}>
+                      <WrapItem key={index}>
                         <Button onClick={() => insertSymbol(item.symbol)}>
-                        {item.label}
+                          {item.label}
                         </Button>
-                    </WrapItem>
+                      </WrapItem>
                     ))}
-                </Wrap>
+                  </Wrap>
                 </TabPanel>
                 <TabPanel>
-                {/* Relações */}
-                <Wrap spacing={2}>
+                  <Wrap spacing={2}>
                     {relations.map((item, index) => (
-                    <WrapItem key={index}>
+                      <WrapItem key={index}>
                         <Button onClick={() => insertSymbol(item.symbol)}>
-                        {item.label}
+                          {item.label}
                         </Button>
-                    </WrapItem>
+                      </WrapItem>
                     ))}
-                </Wrap>
+                  </Wrap>
                 </TabPanel>
                 <TabPanel>
-                {/* Setas */}
-                <Wrap spacing={2}>
+                  <Wrap spacing={2}>
                     {arrows.map((item, index) => (
-                    <WrapItem key={index}>
+                      <WrapItem key={index}>
                         <Button onClick={() => insertSymbol(item.symbol)}>
-                        {item.label}
+                          {item.label}
                         </Button>
-                    </WrapItem>
+                      </WrapItem>
                     ))}
-                </Wrap>
+                  </Wrap>
                 </TabPanel>
-            </TabPanels>
+              </TabPanels>
             </ChakraTabs>
-
 
             {/* Campo do MathField */}
             <Box mt={4}>
@@ -241,7 +285,7 @@ const FormulaEditor = ({
         </ModalBody>
 
         <ModalFooter>
-          <Button colorScheme="red" mr={3} onClick={saveFormula}>
+          <Button bg="red.600" colorScheme="red" mr={3} onClick={saveFormula}>
             Salvar
           </Button>
           <Button variant="ghost" onClick={onClose}>
