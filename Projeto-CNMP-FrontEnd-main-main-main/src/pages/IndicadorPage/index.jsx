@@ -32,7 +32,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { FaSearch, FaRegEdit } from "react-icons/fa";
-import { exportarSelecionadosParaPDF, exportarSelecionadosParaExcel } from '../exportPDFeExcell';
+import { exportarSelecionadosParaPDF, exportarSelecionadosParaExcel } from '../../components/exportPDFeExcell';
 import { toPng } from 'html-to-image';
 
 export default function IndicadorPage() {

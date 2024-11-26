@@ -1,3 +1,5 @@
+// src/pages/AdminPage/index.jsx
+
 import React, { useState } from 'react';
 import {
   Box,
@@ -11,29 +13,17 @@ import {
   TabList,
   TabPanel,
   TabPanels,
-  Tabs,
+  Tabs as ChakraTabs,
   Textarea,
   VStack,
   Heading,
   useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  SimpleGrid,
   Text,
 } from '@chakra-ui/react';
 import Header from '../../components/Header';
 
-// Importar o MathQuill e o CSS correto
-import 'mathquill/build/mathquill.css';
-import { addStyles, EditableMathField } from 'react-mathquill';
-
-// Adicionar estilos do MathQuill
-addStyles();
+// Importar o componente FormulaEditor
+import FormulaEditor from '../../components/FormulaEditor/FormulaEditor';
 
 const FormGroup = ({ label, children }) => (
   <FormControl isRequired>
@@ -77,12 +67,6 @@ const AdminPage = () => {
   // Estado para controlar o modal da fórmula
   const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
 
-  // Estado para a fórmula em LaTeX
-  const [latexFormula, setLatexFormula] = useState('');
-
-  // Referência ao MathField
-  const [mathField, setMathField] = useState(null);
-
   // Função para abrir o modal da fórmula
   const openFormulaModal = () => setIsFormulaModalOpen(true);
 
@@ -90,7 +74,7 @@ const AdminPage = () => {
   const closeFormulaModal = () => setIsFormulaModalOpen(false);
 
   // Função para salvar a fórmula
-  const saveFormula = () => {
+  const saveFormula = (latexFormula) => {
     setFormData({ ...formData, formula: latexFormula });
     closeFormulaModal();
   };
@@ -119,16 +103,7 @@ const AdminPage = () => {
     setFormData({ ...formData, componentes: newComponents });
   };
 
-  // Função para inserir símbolos no MathField
-  const insertSymbol = (symbol) => {
-    if (mathField) {
-      mathField.write(symbol);
-      mathField.focus();
-      setLatexFormula(mathField.latex());
-    }
-  };
-
-  // Função para iniciar a edição de um componente
+  // Funções para manipulação dos componentes
   const startComponentEdit = (index) => {
     setComponentOriginalValues((prev) => {
       const updated = [...prev];
@@ -142,7 +117,6 @@ const AdminPage = () => {
     });
   };
 
-  // Função para salvar as alterações de um componente
   const saveComponentValue = (index) => {
     setEditingComponents((prev) => {
       const updated = [...prev];
@@ -156,7 +130,6 @@ const AdminPage = () => {
     });
   };
 
-  // Função para cancelar a edição de um componente
   const cancelComponentEdit = (index) => {
     const originalValue = componentOriginalValues[index];
     setFormData((prev) => {
@@ -338,16 +311,29 @@ const AdminPage = () => {
                 placeholder={`Descreva o componente ${index + 1}`}
               />
               <ButtonGroup mt={2}>
-                <Button size="sm" bg="red.600" colorScheme="red" onClick={() => saveComponentValue(index)}>
+                <Button
+                  size="sm"
+                  bg="red.600"
+                  colorScheme="red"
+                  onClick={() => saveComponentValue(index)}
+                >
                   Salvar
                 </Button>
-                <Button size="sm" bg="red.200" onClick={() => cancelComponentEdit(index)}>Cancelar</Button>
+                <Button size="sm" bg="red.200" onClick={() => cancelComponentEdit(index)}>
+                  Cancelar
+                </Button>
               </ButtonGroup>
             </>
           ) : (
             <>
               <Text>{component.valor || 'Sem descrição'}</Text>
-              <Button size="sm" mt={2} colorScheme='red' bg='red.600' onClick={() => startComponentEdit(index)}>
+              <Button
+                size="sm"
+                mt={2}
+                colorScheme="red"
+                bg="red.600"
+                onClick={() => startComponentEdit(index)}
+              >
                 Editar
               </Button>
             </>
@@ -367,64 +353,14 @@ const AdminPage = () => {
         />
       </FormGroup>
 
-      {/* Modal para inserir a fórmula */}
-      <Modal isOpen={isFormulaModalOpen} onClose={closeFormulaModal} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Inserir Fórmula</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              {/* Botões para inserir símbolos */}
-              <SimpleGrid columns={[4, 6]} spacing={2} mb={3}>
-                {[
-                  { symbol: '+', label: '+' },
-                  { symbol: '-', label: '-' },
-                  { symbol: '*', label: '×' },
-                  { symbol: '/', label: '÷' },
-                  { symbol: '^', label: '^' },
-                  { symbol: '(', label: '(' },
-                  { symbol: ')', label: ')' },
-                  { symbol: '\\sqrt{}', label: '√' },
-                  { symbol: '\\frac{}{}', label: 'Fraç' },
-                  { symbol: 'x', label: 'x' },
-                  { symbol: 'y', label: 'y' },
-                  { symbol: 'z', label: 'z' },
-                  // Adicione mais símbolos conforme necessário
-                ].map((item, index) => (
-                  <Button key={index} onClick={() => insertSymbol(item.symbol)}>
-                    {item.label}
-                  </Button>
-                ))}
-              </SimpleGrid>
-
-              <EditableMathField
-                latex={latexFormula}
-                onChange={(mathField) => {
-                  setLatexFormula(mathField.latex());
-                }}
-                mathquillDidMount={(mathFieldRef) => {
-                  setMathField(mathFieldRef);
-                }}
-                style={{
-                  minHeight: '50px',
-                  fontSize: '1.4em',
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                }}
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button size="sm" bg="red.600" colorScheme="red" mr={3} onClick={saveFormula}>
-              Salvar
-            </Button>
-            <Button size="sm" bg="red.200" variant="ghost" onClick={closeFormulaModal}>
-              Cancelar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Renderizar o componente FormulaEditor */}
+      <FormulaEditor
+        isOpen={isFormulaModalOpen}
+        onClose={closeFormulaModal}
+        onSave={saveFormula}
+        initialFormula={formData.formula}
+        componentes={formData.componentes}
+      />
 
       <FormControl>
         <FormLabel>Fonte/Forma de Coleta dos Dados</FormLabel>
@@ -552,17 +488,16 @@ const AdminPage = () => {
   return (
     <Header>
       <Box p={4}>
-      <Tabs variant="enclosed">
-        <TabList>
-          <Tab color="red.500">Geral</Tab>
-        </TabList>
-        <TabPanels>
-          <TabPanel>{renderGeneralTab()}</TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
-  </Header>
-
+        <ChakraTabs variant="enclosed">
+          <TabList>
+            <Tab color="red.500">Geral</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>{renderGeneralTab()}</TabPanel>
+          </TabPanels>
+        </ChakraTabs>
+      </Box>
+    </Header>
   );
 };
 

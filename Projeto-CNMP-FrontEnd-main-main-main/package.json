@@ -17,6 +17,7 @@
     "html-to-image": "^1.11.11",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
+    "katex": "^0.16.11",
     "mathquill": "^0.10.1-a",
     "nvm": "^0.0.4",
     "react": "^18.2.0",
