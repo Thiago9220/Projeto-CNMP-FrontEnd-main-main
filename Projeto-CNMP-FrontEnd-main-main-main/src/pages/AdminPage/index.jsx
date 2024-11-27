@@ -23,7 +23,7 @@ import {
 import Header from '../../components/Header';
 
 // Importar o componente FormulaEditor
-import FormulaEditor from '../../components/FormulaEditor/FormulaEditor';
+import FormulaEditor from '../../components/FormulaEditor/index';
 
 const FormGroup = ({ label, children }) => (
   <FormControl isRequired>

@@ -32,9 +32,6 @@ import {
   Input,
   InputGroup,
   InputRightElement,
-  Textarea,
-  Select,
-  useToast,
 } from "@chakra-ui/react";
 import {
   FiHome,
@@ -53,6 +50,8 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useToast } from "@chakra-ui/react";
+import HelpForm from "../helpform";
 
 // Importando imagens
 import cnmpffImage from "../../assets/cnmpff.png";
@@ -102,12 +101,7 @@ const NavItem = ({ icon, route, isActive, children, ...rest }) => {
 };
 
 // Definição do componente SidebarContent
-const SidebarContent = ({
-  onClose,
-  onOpenHelpForm,
-  isNormalUser,
-  ...rest
-}) => {
+const SidebarContent = ({ onClose, isNormalUser, onOpenHelpForm, ...rest }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -163,6 +157,7 @@ const SidebarContent = ({
           {link.name}
         </NavItem>
       ))}
+      {/* Botão para abrir o modal de ajuda */}
       <Box position="absolute" bottom="8" w="full" px="4">
         <Button
           onClick={onOpenHelpForm}
@@ -179,13 +174,7 @@ const SidebarContent = ({
 };
 
 // Definição do componente MobileNav
-const MobileNav = ({
-  onOpen,
-  isNormalUser,
-  onOpenEditProfile,
-  profileImage,
-  ...rest
-}) => {
+const MobileNav = ({ onOpen, isNormalUser, onOpenEditProfile, profileImage, ...rest }) => {
   const navigate = useNavigate();
   const [nomeUsuario, setNomeUsuario] = useState("");
 
@@ -295,8 +284,6 @@ const SidebarWithHeader = ({ children }) => {
   } = useDisclosure();
 
   const [isNormalUser, setIsNormalUser] = useState(false);
-  const [helpType, setHelpType] = useState("");
-  const [helpMessage, setHelpMessage] = useState("");
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [oldPassword, setOldPassword] = useState("");
@@ -324,79 +311,12 @@ const SidebarWithHeader = ({ children }) => {
     }
   }, [isEditProfileOpen]);
 
-  const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSendHelpRequest = () => {
-    console.log("Tipo de ajuda:", helpType);
-    console.log("Mensagem:", helpMessage);
-    onCloseHelpForm();
-  };
-
-  const handleUpdateProfile = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("nome", userName);
-      formData.append("senha_antiga", oldPassword);
-      formData.append("nova_senha", password);
-      if (profileImage) {
-        formData.append("foto_perfil", profileImage);
-      }
-
-      await axios.put(
-        `http://localhost:8000/usuarios/${localStorage.getItem(
-          "userId"
-        )}/atualizar_perfil`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      localStorage.setItem("nomeUsuario", userName);
-      if (profileImagePreview) {
-        localStorage.setItem("profileImage", profileImagePreview);
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso!",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-
-      onCloseEditProfile();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description:
-          error.response.data.detail || "Erro ao atualizar o perfil",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
-
   return (
     <Box minH="100vh" bg={useColorModeValue("white", "gray.900")}>
       <SidebarContent
         onClose={onClose}
-        onOpenHelpForm={onOpenHelpForm}
         isNormalUser={isNormalUser}
+        onOpenHelpForm={onOpenHelpForm}
         display={{ base: "none", md: "block" }}
       />
       <Drawer
@@ -410,8 +330,8 @@ const SidebarWithHeader = ({ children }) => {
         <DrawerContent>
           <SidebarContent
             onClose={onClose}
-            onOpenHelpForm={onOpenHelpForm}
             isNormalUser={isNormalUser}
+            onOpenHelpForm={onOpenHelpForm}
           />
         </DrawerContent>
       </Drawer>
@@ -425,135 +345,8 @@ const SidebarWithHeader = ({ children }) => {
         {children}
       </Box>
 
-      {/* Modal para o formulário de ajuda */}
-      <Modal isOpen={isHelpFormOpen} onClose={onCloseHelpForm}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Solicitar ajuda</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl id="help-type" mb={4}>
-              <FormLabel>Tipo de ajuda</FormLabel>
-              <Select
-                placeholder="Selecione o tipo de ajuda"
-                value={helpType}
-                onChange={(e) => setHelpType(e.target.value)}
-              >
-                <option value="problema-tecnico">Problema técnico</option>
-                <option value="duvida-sistema">Dúvida sobre o sistema</option>
-                <option value="sugestao-melhoria">Sugestão de melhoria</option>
-                <option value="outros">Outros</option>
-              </Select>
-            </FormControl>
-            <FormControl id="help-message">
-              <FormLabel>Mensagem</FormLabel>
-              <Textarea
-                placeholder="Descreva sua solicitação"
-                value={helpMessage}
-                onChange={(e) => setHelpMessage(e.target.value)}
-              />
-            </FormControl>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button size="sm" bg="red.600" colorScheme="red" mr={3} onClick={handleSendHelpRequest}>
-              Enviar
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onCloseHelpForm}>
-              Cancelar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Modal para editar perfil */}
-      <Modal isOpen={isEditProfileOpen} onClose={onCloseEditProfile}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Editar Perfil</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl id="profile-image" mb={4} textAlign="center">
-              <FormLabel>Foto de Perfil</FormLabel>
-              <Box position="relative" display="inline-block">
-                <Avatar size="xl" src={profileImagePreview || cnmpffImage} />
-                <IconButton
-                  icon={<FiCamera />}
-                  position="absolute"
-                  bottom="0"
-                  right="0"
-                  rounded="full"
-                  onClick={() => document.getElementById("file-input").click()}
-                />
-              </Box>
-              <Input
-                id="file-input"
-                type="file"
-                accept="image/*"
-                display="none"
-                onChange={handleProfileImageChange}
-              />
-            </FormControl>
-
-            <FormControl id="user-name" mb={4}>
-              <FormLabel>Nome de Usuário</FormLabel>
-              <Input
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-              />
-            </FormControl>
-
-            {/* Campo para senha antiga */}
-            <FormControl id="old-password" mb={4}>
-              <FormLabel>Senha antiga</FormLabel>
-              <InputGroup>
-                <Input
-                  type={showOldPassword ? "text" : "password"}
-                  placeholder="Digite sua senha antiga"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                />
-                <InputRightElement>
-                  <IconButton
-                    icon={showOldPassword ? <FiEyeOff /> : <FiEye />}
-                    onClick={() => setShowOldPassword(!showOldPassword)}
-                    variant="ghost"
-                  />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
-
-            {/* Campo para nova senha */}
-            <FormControl id="user-password">
-              <FormLabel>Nova senha</FormLabel>
-              <InputGroup>
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Digite sua nova senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <InputRightElement>
-                  <IconButton
-                    icon={showPassword ? <FiEyeOff /> : <FiEye />}
-                    onClick={() => setShowPassword(!showPassword)}
-                    variant="ghost"
-                  />
-                </InputRightElement>
-              </InputGroup>
-            </FormControl>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleUpdateProfile}>
-              Salvar Alterações
-            </Button>
-            <Button variant="ghost" onClick={onCloseEditProfile}>
-              Cancelar
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Renderizando o HelpForm */}
+      <HelpForm isOpen={isHelpFormOpen} onClose={onCloseHelpForm} />
     </Box>
   );
 };
