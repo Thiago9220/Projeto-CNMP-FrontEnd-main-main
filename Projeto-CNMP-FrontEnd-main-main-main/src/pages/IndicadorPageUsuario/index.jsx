@@ -13,7 +13,6 @@ import {
   Th,
   Td,
   Input,
-  Textarea,
   Tooltip,
   Button,
   useToast,
@@ -25,24 +24,26 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  ModalFooter,
   ModalCloseButton,
   useDisclosure,
   Stack,
+  Textarea,
 } from '@chakra-ui/react';
-import { InfoIcon, EditIcon, CheckIcon, ViewIcon, CalendarIcon } from '@chakra-ui/icons';
+import { InfoIcon, EditIcon, ViewIcon, CalendarIcon } from '@chakra-ui/icons';
 
 const App = () => {
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [meta, setMeta] = useState('0%');
-  const [analysis, setAnalysis] = useState('');
   const [formData, setFormData] = useState({
     prescrito: Array(12).fill(''),
     finalizado: Array(12).fill(''),
     analiseMensal: Array(12).fill(''),
   });
   const [indicators, setIndicators] = useState([]);
-  const [editingMonths, setEditingMonths] = useState(Array(12).fill(false));
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedMonthText, setSelectedMonthText] = useState('');
+  const [modalMode, setModalMode] = useState(''); // "edit" ou "view"
   const [selectedDate, setSelectedDate] = useState(new Date());
   const toast = useToast();
 
@@ -84,9 +85,7 @@ const App = () => {
 
       setSelectedIndicator(parsedData.selectedIndicator || '');
       setMeta(parsedData.meta || '0%');
-      setAnalysis(parsedData.analysis || '');
       setFormData(updatedFormData);
-      setEditingMonths(Array(12).fill(false));
     }
   }, []);
 
@@ -108,7 +107,6 @@ const App = () => {
     const dataToSave = {
       selectedIndicator,
       meta,
-      analysis,
       formData,
     };
     localStorage.setItem('formData', JSON.stringify(dataToSave));
@@ -121,25 +119,30 @@ const App = () => {
     });
   };
 
-  const toggleEditingMonth = index => {
-    setEditingMonths(prev => {
-      const updated = [...prev];
-      updated[index] = !updated[index];
-      return updated;
-    });
-
-    setTimeout(() => {
-      const textarea = document.querySelector(`#analise-${index}`);
-      if (textarea) {
-        textarea.focus();
-        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-      }
-    }, 0);
+  const openEditModal = index => {
+    setSelectedMonth(index);
+    setSelectedMonthText(formData.analiseMensal[index] || '');
+    setModalMode('edit');
+    onOpen();
   };
 
-  const openAnalysisModal = index => {
+  const openViewModal = index => {
     setSelectedMonth(index);
+    setSelectedMonthText(formData.analiseMensal[index] || '');
+    setModalMode('view');
     onOpen();
+  };
+
+  const saveAnalysis = () => {
+    handleInputChange('analiseMensal', selectedMonth, selectedMonthText);
+    toast({
+      title: 'Análise salva!',
+      description: 'O conteúdo foi atualizado.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+    onClose();
   };
 
   const TableRow = ({ label, type }) => (
@@ -183,59 +186,23 @@ const App = () => {
           {type === 'calculado' ? (
             <Text>{valorCalculado[index].toFixed(2)}%</Text>
           ) : type === 'analise' ? (
-            <VStack spacing={1}>
-              {editingMonths[index] ? (
-                <>
-                  <Textarea
-                    id={`analise-${index}`}
-                    size="xs"
-                    value={formData.analiseMensal[index] || ''}
-                    onChange={e =>
-                      handleInputChange('analiseMensal', index, e.target.value)
-                    }
-                    isReadOnly={!editingMonths[index]}
-                    autoFocus={editingMonths[index]}
-                    onFocus={e => {
-                      const value = e.target.value;
-                      e.target.setSelectionRange(
-                        value.length,
-                        value.length
-                      );
-                    }}
-                    borderColor={
-                      editingMonths[index] ? 'blue.400' : 'gray.300'
-                    }
-                    _focus={{
-                      borderColor: 'blue.600',
-                      boxShadow: '0 0 0 1px blue.600',
-                    }}
-                  />
-                  <IconButton
-                    size="xs"
-                    icon={<CheckIcon />}
-                    aria-label="Salvar Análise"
-                    onClick={() => toggleEditingMonth(index)}
-                  />
-                </>
-              ) : (
-                <Stack spacing={1} isInline>
+              <Stack direction="row" spacing={2} justify="center" align="center">
                   <IconButton
                     size="xs"
                     icon={<EditIcon />}
                     aria-label="Editar Análise"
-                    onClick={() => toggleEditingMonth(index)}
+                    onClick={() => openEditModal(index)}
                     isDisabled={index >= currentMonth}
                   />
                   <IconButton
                     size="xs"
                     icon={<ViewIcon />}
-                    aria-label="Ver Análise Crítica"
-                    onClick={() => openAnalysisModal(index)}
-                    isDisabled={index >= currentMonth}
+                    aria-label="Visualizar Análise"
+                    onClick={() => openViewModal(index)}
+                    isDisabled={!formData.analiseMensal[index]}
                   />
-                </Stack>
-              )}
-            </VStack>
+              </Stack>
+
           ) : (
             <Input
               size="sm"
@@ -399,19 +366,33 @@ const App = () => {
           <ModalOverlay />
           <ModalContent>
             <ModalHeader>
-              Análise Crítica -{' '}
-              {selectedMonth !== null
-                ? months[selectedMonth]
-                : ''}
+              {modalMode === 'edit'
+                ? `Editar Análise - ${months[selectedMonth]}`
+                : `Visualizar Análise - ${months[selectedMonth]}`}
             </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <Text>
-                {selectedMonth !== null
-                  ? formData.analiseMensal[selectedMonth]
-                  : ''}
-              </Text>
+              {modalMode === 'edit' ? (
+                <Textarea
+                  value={selectedMonthText}
+                  onChange={e => setSelectedMonthText(e.target.value)}
+                  placeholder="Escreva sua análise..."
+                  size="sm"
+                />
+              ) : (
+                <Text>{selectedMonthText || 'Nenhum conteúdo disponível.'}</Text>
+              )}
             </ModalBody>
+            {modalMode === 'edit' && (
+              <ModalFooter>
+                <Button bg="red.600" colorScheme="red" mr={3} onClick={saveAnalysis}>
+                  Salvar
+                </Button>
+                <Button variant="ghost" onClick={onClose}>
+                  Cancelar
+                </Button>
+              </ModalFooter>
+            )}
           </ModalContent>
         </Modal>
       </Box>
