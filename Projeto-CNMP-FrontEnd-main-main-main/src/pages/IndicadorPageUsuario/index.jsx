@@ -372,17 +372,57 @@ const App = () => {
             </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              {modalMode === 'edit' ? (
-                <Textarea
-                  value={selectedMonthText}
-                  onChange={e => setSelectedMonthText(e.target.value)}
-                  placeholder="Escreva sua análise..."
-                  size="sm"
-                />
-              ) : (
+            {modalMode === 'edit' ? (
+              <Textarea
+                value={selectedMonthText}
+                onChange={e => setSelectedMonthText(e.target.value)}
+                placeholder="Escreva sua análise..."
+                size="sm"
+              />
+            ) : (
+              <VStack spacing={4}>
                 <Text>{selectedMonthText || 'Nenhum conteúdo disponível.'}</Text>
-              )}
-            </ModalBody>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (selectedMonthText) {
+                      navigator.clipboard.writeText(selectedMonthText)
+                        .then(() => {
+                          toast({
+                            title: 'Conteúdo copiado!',
+                            description: 'O texto foi copiado para a área de transferência.',
+                            status: 'success',
+                            duration: 3000,
+                            isClosable: true,
+                          });
+                        })
+                        .catch(() => {
+                          toast({
+                            title: 'Erro ao copiar!',
+                            description: 'Não foi possível copiar o conteúdo.',
+                            status: 'error',
+                            duration: 3000,
+                            isClosable: true,
+                          });
+                        });
+                    } else {
+                      toast({
+                        title: 'Nenhum conteúdo para copiar!',
+                        description: 'A análise está vazia.',
+                        status: 'warning',
+                        duration: 3000,
+                        isClosable: true,
+                      });
+                    }
+                  }}
+                >
+                  Copiar Conteúdo
+                </Button>
+              </VStack>
+            )}
+          </ModalBody>
+
             {modalMode === 'edit' && (
               <ModalFooter>
                 <Button bg="red.600" colorScheme="red" mr={3} onClick={saveAnalysis}>
