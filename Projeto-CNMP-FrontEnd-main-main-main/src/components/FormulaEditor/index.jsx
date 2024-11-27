@@ -10,17 +10,13 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs as ChakraTabs,
   Text,
   VStack,
   Wrap,
   WrapItem,
   useColorModeValue,
   useToast,
+  Flex,
 } from '@chakra-ui/react';
 
 // Importar o MathQuill, KaTeX e os estilos necessários
@@ -44,7 +40,7 @@ const FormulaEditor = ({
   const [mathField, setMathField] = useState(null);
   const toast = useToast();
 
-  // Arrays de símbolos organizados por categorias
+  // Array de operadores
   const operators = [
     { symbol: '+', label: '+' },
     { symbol: '-', label: '-' },
@@ -68,39 +64,6 @@ const FormulaEditor = ({
     { symbol: ')', label: ')' },
   ];
 
-  const greekLetters = [
-    { symbol: '\\alpha', label: 'α' },
-    { symbol: '\\beta', label: 'β' },
-    { symbol: '\\gamma', label: 'γ' },
-    { symbol: '\\delta', label: 'δ' },
-    { symbol: '\\epsilon', label: 'ε' },
-    { symbol: '\\theta', label: 'θ' },
-    { symbol: '\\lambda', label: 'λ' },
-    { symbol: '\\mu', label: 'μ' },
-    { symbol: '\\sigma', label: 'σ' },
-    { symbol: '\\phi', label: 'φ' },
-    { symbol: '\\omega', label: 'ω' },
-  ];
-
-  const relations = [
-    { symbol: '=', label: '=' },
-    { symbol: '\\ne', label: '≠' },
-    { symbol: '<', label: '<' },
-    { symbol: '>', label: '>' },
-    { symbol: '\\leq', label: '≤' },
-    { symbol: '\\geq', label: '≥' },
-    { symbol: '\\approx', label: '≈' },
-    { symbol: '\\propto', label: '∝' },
-  ];
-
-  const arrows = [
-    { symbol: '\\leftarrow', label: '←' },
-    { symbol: '\\rightarrow', label: '→' },
-    { symbol: '\\leftrightarrow', label: '↔' },
-    { symbol: '\\uparrow', label: '↑' },
-    { symbol: '\\downarrow', label: '↓' },
-  ];
-
   // Função para inserir símbolos no MathField
   const insertSymbol = (symbol) => {
     if (mathField) {
@@ -118,7 +81,8 @@ const FormulaEditor = ({
     } catch (error) {
       toast({
         title: 'Erro de Fórmula',
-        description: 'A fórmula contém erros. Por favor, corrija antes de salvar.',
+        description:
+          'A fórmula contém erros. Por favor, corrija antes de salvar.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -165,123 +129,87 @@ const FormulaEditor = ({
   }, [mathField, latexFormula]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent
         bg={useColorModeValue('white', 'gray.800')}
         color={useColorModeValue('black', 'white')}
+        maxWidth="900px"
       >
         <ModalHeader>Inserir Fórmula</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <FormControl>
-            <ChakraTabs variant="enclosed" defaultIndex={0}>
-              <TabList>
-                <Tab>Componentes</Tab>
-                <Tab>Operadores</Tab>
-                <Tab>Letras Gregas</Tab>
-                <Tab>Relações</Tab>
-                <Tab>Setas</Tab>
-              </TabList>
-              <TabPanels>
-                <TabPanel>
-                  <VStack align="stretch" spacing={2}>
-                    {componentes.map((component, index) => (
-                      <Button
-                        key={index}
-                        size="sm"
-                        variant="outline"
-                        onClick={() => insertSymbol(`Componente${index + 1}`)}
-                      >
-                        {`Componente ${index + 1}: ${component.valor || 'Sem Valor'}`}
-                      </Button>
-                    ))}
-                  </VStack>
-                </TabPanel>
-                <TabPanel>
-                  <Wrap spacing={2}>
-                    {operators.map((item, index) => (
-                      <WrapItem key={index}>
-                        <Button onClick={() => insertSymbol(item.symbol)}>
-                          {item.label}
-                        </Button>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </TabPanel>
-                <TabPanel>
-                  <Wrap spacing={2}>
-                    {greekLetters.map((item, index) => (
-                      <WrapItem key={index}>
-                        <Button onClick={() => insertSymbol(item.symbol)}>
-                          {item.label}
-                        </Button>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </TabPanel>
-                <TabPanel>
-                  <Wrap spacing={2}>
-                    {relations.map((item, index) => (
-                      <WrapItem key={index}>
-                        <Button onClick={() => insertSymbol(item.symbol)}>
-                          {item.label}
-                        </Button>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </TabPanel>
-                <TabPanel>
-                  <Wrap spacing={2}>
-                    {arrows.map((item, index) => (
-                      <WrapItem key={index}>
-                        <Button onClick={() => insertSymbol(item.symbol)}>
-                          {item.label}
-                        </Button>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </TabPanel>
-              </TabPanels>
-            </ChakraTabs>
-
-            {/* Campo do MathField */}
-            <Box mt={4}>
-              <EditableMathField
-                latex={latexFormula}
-                onChange={(mathField) => {
-                  setLatexFormula(mathField.latex());
-                }}
-                mathquillDidMount={(mathFieldRef) => {
-                  setMathField(mathFieldRef);
-                }}
-                style={{
-                  minHeight: '50px',
-                  fontSize: '1.4em',
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                }}
-              />
+          <Flex>
+            {/* Lado esquerdo: Componentes */}
+            <Box width="30%" pr={4} maxHeight="400px" overflowY="auto">
+              <VStack align="stretch" spacing={2}>
+                {componentes.map((component, index) => (
+                  <Button
+                    key={index}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => insertSymbol(component.valor || '')}
+                  >
+                    {`Componente ${index + 1}: ${component.valor || 'Sem Valor'}`}
+                  </Button>
+                ))}
+              </VStack>
             </Box>
-
-            {/* Pré-visualização */}
-            <Box mt={4}>
-              <Text fontWeight="bold">Pré-visualização:</Text>
-              <Box border="1px solid #ccc" padding="10px" minHeight="50px">
-                {latexFormula ? (
-                  <Text
-                    dangerouslySetInnerHTML={{
-                      __html: katex.renderToString(latexFormula, {
-                        throwOnError: false,
-                      }),
-                    }}
-                  />
-                ) : (
-                  <Text>Digite uma fórmula para ver a pré-visualização</Text>
-                )}
+            {/* Lado direito: Operadores no topo, campo de texto e pré-visualização abaixo */}
+            <Box width="70%">
+              {/* Operadores */}
+              <Wrap spacing={2} mb={4}>
+                {operators.map((item, index) => (
+                  <WrapItem key={index}>
+                    <Button onClick={() => insertSymbol(item.symbol)}>
+                      {item.label}
+                    </Button>
+                  </WrapItem>
+                ))}
+              </Wrap>
+              {/* Campo do MathField */}
+              <Box>
+                <EditableMathField
+                  latex={latexFormula}
+                  onChange={(mathField) => {
+                    setLatexFormula(mathField.latex());
+                  }}
+                  mathquillDidMount={(mathFieldRef) => {
+                    setMathField(mathFieldRef);
+                  }}
+                  style={{
+                    minHeight: '200px',
+                    fontSize: '1.4em',
+                    border: '1px solid #ccc',
+                    padding: '10px',
+                    width: '100%',
+                  }}
+                />
+              </Box>
+              {/* Pré-visualização */}
+              <Box mt={4}>
+                <Text fontWeight="bold">Pré-visualização:</Text>
+                <Box
+                  border="1px solid #ccc"
+                  padding="10px"
+                  minHeight="50px"
+                  overflowX="auto"
+                >
+                  {latexFormula ? (
+                    <Text
+                      dangerouslySetInnerHTML={{
+                        __html: katex.renderToString(latexFormula, {
+                          throwOnError: false,
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <Text>Digite uma fórmula para ver a pré-visualização</Text>
+                  )}
+                </Box>
               </Box>
             </Box>
-          </FormControl>
+          </Flex>
         </ModalBody>
 
         <ModalFooter>
