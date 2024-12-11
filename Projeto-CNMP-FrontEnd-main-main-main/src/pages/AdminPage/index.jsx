@@ -1,10 +1,9 @@
 // src/pages/AdminPage/index.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  ButtonGroup,
   FormControl,
   FormLabel,
   Input,
@@ -21,8 +20,6 @@ import {
   Text,
 } from '@chakra-ui/react';
 import Header from '../../components/Header';
-
-// Importar o componente FormulaEditor
 import FormulaEditor from '../../components/FormulaEditor/index';
 
 const FormGroup = ({ label, children }) => (
@@ -35,7 +32,7 @@ const FormGroup = ({ label, children }) => (
 const AdminPage = () => {
   const toast = useToast();
 
-  // Estado para armazenar os dados do formulário
+  // Estado principal do formulário
   const [formData, setFormData] = useState({
     codigoIndicador: '',
     nomeIndicador: '',
@@ -60,30 +57,29 @@ const AdminPage = () => {
     componentes: [],
   });
 
-  // Estados para controlar a edição dos componentes
+  // Estados para edição de componentes
   const [editingComponents, setEditingComponents] = useState([]);
   const [componentOriginalValues, setComponentOriginalValues] = useState([]);
 
-  // Estado para controlar o modal da fórmula
+  // Estado para modal de fórmula
   const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
 
-  // Função para abrir o modal da fórmula
-  const openFormulaModal = () => setIsFormulaModalOpen(true);
+  // Estado para controlar qual tipo de visualização (viewType) será usado na tabela
+  // Pode ser 'mensal', 'semestral', 'bimestral', etc.
+  const [viewType, setViewType] = useState('');
 
-  // Função para fechar o modal da fórmula
+  const openFormulaModal = () => setIsFormulaModalOpen(true);
   const closeFormulaModal = () => setIsFormulaModalOpen(false);
 
-  // Função para salvar a fórmula
   const saveFormula = (latexFormula) => {
     setFormData({ ...formData, formula: latexFormula });
     closeFormulaModal();
   };
 
-  // Função para lidar com mudanças nos campos de entrada
+  // Ao mudar qualquer campo do formulário
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Se o campo é 'numeroComponentes', atualiza o número de componentes e reseta os valores anteriores
     if (name === 'numeroComponentes') {
       const numComponents = parseInt(value, 10) || 0;
       const newComponents = Array(numComponents).fill({ valor: '' });
@@ -92,10 +88,44 @@ const AdminPage = () => {
       setComponentOriginalValues(Array(numComponents).fill(''));
     } else {
       setFormData({ ...formData, [name]: value });
+
+      // Se mudar a periodicidade de coleta, atualizamos o viewType
+      if (name === 'periodicidadeColeta') {
+        atualizarViewType(value);
+      }
     }
   };
 
-  // Função para lidar com mudanças nos valores dos componentes
+  // Função para definir o viewType com base na periodicidade selecionada
+  const atualizarViewType = (periodicidade) => {
+    // Aqui você pode criar uma lógica de mapeamento.
+    // Exemplo simples: o valor do combo é o mesmo da viewType
+    // Mas você pode criar um switch se quiser algo mais customizado.
+    switch (periodicidade) {
+      case 'mensal':
+        setViewType('mensal');
+        break;
+      case 'bimestral':
+        setViewType('bimestral');
+        break;
+      case 'trimestral':
+        setViewType('trimestral');
+        break;
+      case 'quadrimestral':
+        setViewType('quadrimestral');
+        break;
+      case 'semestral':
+        setViewType('semestral');
+        break;
+      case 'anual':
+        setViewType('anual');
+        break;
+      default:
+        setViewType('');
+        break;
+    }
+  };
+
   const handleComponentChange = (index, e) => {
     const { name, value } = e.target;
     const newComponents = [...formData.componentes];
@@ -103,7 +133,6 @@ const AdminPage = () => {
     setFormData({ ...formData, componentes: newComponents });
   };
 
-  // Funções para manipulação dos componentes
   const startComponentEdit = (index) => {
     setComponentOriginalValues((prev) => {
       const updated = [...prev];
@@ -149,7 +178,6 @@ const AdminPage = () => {
     });
   };
 
-  // Função para validar e enviar os dados para o backend
   const handleSave = async () => {
     if (!formData.codigoIndicador || !formData.nomeIndicador) {
       toast({
@@ -199,7 +227,6 @@ const AdminPage = () => {
 
   const renderGeneralTab = () => (
     <VStack spacing={4} align="stretch">
-      {/* POSICIONAMENTO NO MAPA ESTRATÉGICO */}
       <Heading as="h2" size="lg">
         Posicionamento no Mapa Estratégico
       </Heading>
@@ -248,7 +275,6 @@ const AdminPage = () => {
         />
       </FormGroup>
 
-      {/* INFORMAÇÕES GERAIS */}
       <Heading as="h2" size="lg">
         Informações Gerais
       </Heading>
@@ -284,7 +310,6 @@ const AdminPage = () => {
         </Select>
       </FormGroup>
 
-      {/* COMPONENTES */}
       <FormGroup label="Número de componentes">
         <Select
           name="numeroComponentes"
@@ -298,7 +323,6 @@ const AdminPage = () => {
         </Select>
       </FormGroup>
 
-      {/* Campos para os valores dos componentes */}
       {formData.componentes.map((component, index) => (
         <FormGroup key={index} label={`Componente ${index + 1}`}>
           {editingComponents[index] ? (
@@ -310,25 +334,17 @@ const AdminPage = () => {
                 onChange={(e) => handleComponentChange(index, e)}
                 placeholder={`Descreva o componente ${index + 1}`}
               />
-              <ButtonGroup mt={2}>
-                <Button
-                  size="sm"
-                  bg="red.600"
-                  colorScheme="red"
-                  onClick={() => saveComponentValue(index)}
-                >
-                  Salvar
-                </Button>
-                <Button size="sm" bg="red.200" onClick={() => cancelComponentEdit(index)}>
-                  Cancelar
-                </Button>
-              </ButtonGroup>
+              <Button mt={2} colorScheme="red" bg="red.600" onClick={() => saveComponentValue(index)}>
+                Salvar
+              </Button>
+              <Button mt={2} bg="red.200" onClick={() => cancelComponentEdit(index)}>
+                Cancelar
+              </Button>
             </>
           ) : (
             <>
               <Text>{component.valor || 'Sem descrição'}</Text>
               <Button
-                size="sm"
                 mt={2}
                 colorScheme="red"
                 bg="red.600"
@@ -341,7 +357,6 @@ const AdminPage = () => {
         </FormGroup>
       ))}
 
-      {/* Campo de Fórmula com modal */}
       <FormGroup label="Fórmula">
         <Input
           type="text"
@@ -353,7 +368,6 @@ const AdminPage = () => {
         />
       </FormGroup>
 
-      {/* Renderizar o componente FormulaEditor */}
       <FormulaEditor
         isOpen={isFormulaModalOpen}
         onClose={closeFormulaModal}
@@ -493,7 +507,18 @@ const AdminPage = () => {
             <Tab color="red.500">Geral</Tab>
           </TabList>
           <TabPanels>
-            <TabPanel>{renderGeneralTab()}</TabPanel>
+            <TabPanel>
+              {renderGeneralTab()}
+              {/* Aqui você poderia, por exemplo, renderizar condicionalmente o componente da tabela.
+                  Caso já tenha um componente TabelaIndicadores que recebe o `viewType`: */}
+              
+              {/* Exemplo: 
+              {viewType && <TabelaIndicadores viewType={viewType} />}
+              */}
+
+              {/* Dessa forma, ao mudar a periodicidadeColeta, 
+                  o viewType é atualizado e a tabela correspondente é exibida. */}
+            </TabPanel>
           </TabPanels>
         </ChakraTabs>
       </Box>
