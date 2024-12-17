@@ -7,6 +7,8 @@ import { CalendarIcon } from '@chakra-ui/icons';
 import { useIndicadorData } from '../../hooks/useIndicadorData';
 import MonthlyTableView from '../../components/MonthlyTable/MonthlyTableView';
 import SemestralTableView from '../../components/SemestralTable/SemestralTableView';
+// Importe a nova tabela bimestral
+import BimestralTableView from '../../components/BimestralTable/BimestralTableView';
 
 const IndicadoresPage = () => {
   const [viewType, setViewType] = useState('mensal');
@@ -33,7 +35,12 @@ const IndicadoresPage = () => {
 
   const openEditModal = (index) => {
     setSelectedMonth(index);
-    const analysisField = viewType === 'mensal' ? 'analiseMensal' : 'analiseSemestral';
+    // Ajuste a lógica do campo de análise de acordo com o tipo de visualização
+    const analysisField = 
+      viewType === 'mensal' ? 'analiseMensal' :
+      viewType === 'semestral' ? 'analiseSemestral' :
+      'analiseBimestral'; // nova condição para bimestral
+
     setSelectedMonthText(formData[analysisField][index] || '');
     setModalMode('edit');
     onOpen();
@@ -41,14 +48,22 @@ const IndicadoresPage = () => {
 
   const openViewModal = (index) => {
     setSelectedMonth(index);
-    const analysisField = viewType === 'mensal' ? 'analiseMensal' : 'analiseSemestral';
+    const analysisField = 
+      viewType === 'mensal' ? 'analiseMensal' :
+      viewType === 'semestral' ? 'analiseSemestral' :
+      'analiseBimestral'; // nova condição para bimestral
+
     setSelectedMonthText(formData[analysisField][index] || '');
     setModalMode('view');
     onOpen();
   };
 
   const saveAnalysis = () => {
-    const analysisField = viewType === 'mensal' ? 'analiseMensal' : 'analiseSemestral';
+    const analysisField = 
+      viewType === 'mensal' ? 'analiseMensal' :
+      viewType === 'semestral' ? 'analiseSemestral' :
+      'analiseBimestral'; // nova condição para bimestral
+
     setFormData((prev) => ({
       ...prev,
       [analysisField]: prev[analysisField].map((item, i) =>
@@ -56,7 +71,7 @@ const IndicadoresPage = () => {
       ),
     }));
     toast({
-      title: `Análise ${viewType === 'mensal' ? 'Mensal' : 'Semestral'} salva!`,
+      title: `Análise ${viewType === 'mensal' ? 'Mensal' : viewType === 'semestral' ? 'Semestral' : 'Bimestral'} salva!`,
       description: 'O conteúdo foi atualizado.',
       status: 'success',
       duration: 3000,
@@ -73,7 +88,8 @@ const IndicadoresPage = () => {
             <DatePicker
               selected={selectedDate}
               onChange={(date) => setSelectedDate(date)}
-              showYearPicker={viewType === 'semestral'}
+              // Caso queira que bimestral selecione apenas ano, inclua no showYearPicker:
+              showYearPicker={viewType === 'semestral' || viewType === 'bimestral'}
               dateFormat={viewType === 'mensal' ? "MM/yyyy" : "yyyy"}
               customInput={
                 <Button leftIcon={<CalendarIcon />} variant="outline">
@@ -112,6 +128,7 @@ const IndicadoresPage = () => {
             margin="auto"
           >
             <option value="mensal">Mensal</option>
+            <option value="bimestral">Bimestral</option>
             <option value="semestral">Semestral</option>
           </Select>
         </Box>
@@ -119,6 +136,27 @@ const IndicadoresPage = () => {
         <Box overflowX="auto">
           {viewType === 'mensal' && (
             <MonthlyTableView
+              selectedDate={selectedDate}
+              selectedIndicator={selectedIndicator}
+              meta={meta}
+              setMeta={setMeta}
+              formData={formData}
+              handleInputChange={handleInputChange}
+              valorCalculado={valorCalculado}
+              openEditModal={openEditModal}
+              openViewModal={openViewModal}
+              isOpen={isOpen}
+              onClose={onClose}
+              modalMode={modalMode}
+              selectedMonth={selectedMonth}
+              selectedMonthText={selectedMonthText}
+              setSelectedMonthText={setSelectedMonthText}
+              saveAnalysis={saveAnalysis}
+              salvarDados={salvarDados}
+            />
+          )}
+          {viewType === 'bimestral' && (
+            <BimestralTableView
               selectedDate={selectedDate}
               selectedIndicator={selectedIndicator}
               meta={meta}

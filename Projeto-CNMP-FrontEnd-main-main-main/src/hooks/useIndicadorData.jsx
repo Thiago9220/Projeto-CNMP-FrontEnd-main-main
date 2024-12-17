@@ -21,9 +21,19 @@ export function useIndicadorData(viewType) {
     analiseSemestral: Array(2).fill('')
   };
 
-  const initialState = viewType === 'mensal' 
-    ? initialStateMensal
-    : initialStateSemestral;
+  // Novo estado inicial para bimestral
+  const initialStateBimestral = {
+    prescrito: Array(6).fill(''),
+    finalizado: Array(6).fill(''),
+    analiseBimestral: Array(6).fill('')
+  };
+
+  const initialState = 
+    viewType === 'mensal' 
+      ? initialStateMensal
+      : viewType === 'semestral'
+        ? initialStateSemestral
+        : initialStateBimestral; // Se for bimestral, usa o inicial bimestral
 
   const [formData, setFormData] = useState(initialState);
   const [indicators, setIndicators] = useState([]);
@@ -47,7 +57,15 @@ export function useIndicadorData(viewType) {
 
   // Carrega dados do localStorage de acordo com o tipo de visualização
   useEffect(() => {
-    const storageKey = viewType === 'mensal' ? 'formDataMensal' : 'formDataSemestral';
+    let storageKey;
+    if (viewType === 'mensal') {
+      storageKey = 'formDataMensal';
+    } else if (viewType === 'semestral') {
+      storageKey = 'formDataSemestral';
+    } else {
+      storageKey = 'formDataBimestral';
+    }
+
     const savedData = localStorage.getItem(storageKey);
     if (savedData) {
       const parsedData = JSON.parse(savedData);
@@ -70,7 +88,7 @@ export function useIndicadorData(viewType) {
     }));
   };
 
-  // Verificação de segurança antes de calcular o valor
+  // Cálculo do valorCalculado, adaptado para qualquer um dos tipos (mensal, bimestral, semestral)
   let valorCalculado = [];
   if (formData && formData.prescrito && formData.finalizado && formData.prescrito.length === formData.finalizado.length) {
     valorCalculado = formData.prescrito.map((value, index) => {
@@ -81,13 +99,21 @@ export function useIndicadorData(viewType) {
   }
 
   const salvarDados = () => {
-    const storageKey = viewType === 'mensal' ? 'formDataMensal' : 'formDataSemestral';
+    let storageKey;
+    if (viewType === 'mensal') {
+      storageKey = 'formDataMensal';
+    } else if (viewType === 'semestral') {
+      storageKey = 'formDataSemestral';
+    } else {
+      storageKey = 'formDataBimestral';
+    }
+
     localStorage.setItem(
       storageKey,
       JSON.stringify({ selectedIndicator, meta, formData })
     );
     toast({
-      title: `Dados ${viewType === 'mensal' ? 'Mensais' : 'Semestrais'} salvos!`,
+      title: `Dados ${viewType === 'mensal' ? 'Mensais' : viewType === 'semestral' ? 'Semestrais' : 'Bimestrais'} salvos!`,
       description: `Suas informações foram armazenadas.`,
       status: 'success',
       duration: 3000,
